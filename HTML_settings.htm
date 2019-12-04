@@ -19,16 +19,21 @@ const String str  = R"HTM(
 <!DOCTYPE html><html>
 <head>
 <style>
-html {text-align:center; font-size: 22px;} 
+html {
+text-align:center; 
+font-size: 1.5vh;
+ text-decoration: none;
+}
+
 * {
- font-size: 1em;
+/** font-size: 2vh;*/
  font-family: Arial;
  text-decoration: none;
 }
 
+.bgGr  {background-color: #ccccdd; padding-top: 0.8vh; padding-bottom: 0.5em;}
+.bgOr  {background-color: #ffeeaa; padding-top: 0.8vh; padding-bottom: 0.5em;}
 
-.bgGr  {background-color: #ccccdd;}
-.bgOr  {background-color: #ffeeaa; padding-top:18px;}
 /**
 .grad1 {
   height: 44px;
@@ -46,20 +51,21 @@ position:absolute;
 
 .tc{
 text-align:center;
-font-size: 44px;
+font-size: 3vh;
 }
 
 .pwm_p{
  position: absolute;
- width:55px; height:55px;
- border-radius:55px;
+ width:5vh; height:5vh;
+ border-radius:5vh;
  border: 2px solid #aaff00;/*73AD21*/
- line-height: 55px;
+ line-height: 5vh;
  /**
  display: table-cell;
  vertical-align: middle;
  */
  user-select: none;
+ text-align:center;
 }
 /**
 .contn{
@@ -103,36 +109,11 @@ input[type=range]::-webkit-slider-thumb {
 	background: -moz-linear-gradient(right,  #ff0000 0%, #fcf535 19%, #fcf535 19%, #00ff19 36%, #38ffee 52%, #0011ff 69%, #ff00fa 85%, #ff0004 100%);
 	background: -webkit-linear-gradient(right,  #ff0000 0%,#fcf535 19%,#fcf535 19%,#00ff19 36%,#38ffee 52%,#0011ff 69%,#ff00fa 85%,#ff0004 100%);
 	background: linear-gradient(to right,  #ff0000 0%,#fcf535 19%,#fcf535 19%,#00ff19 36%,#38ffee 52%,#0011ff 69%,#ff00fa 85%,#ff0004 100%);
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ff0000', endColorstr='#ff0004',GradientType=1 );
+/*	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ff0000', endColorstr='#ff0004',GradientType=1 );*/
 }
 
+.tst {font-size:0.7em; text-align: left;}
 
-.notImplemented
-{
-  color: #ff0000;
-  position: absolute;
-  text-align:left;
-  z-index: 99;
-}
-
-
-
-.abs {
-  float: right;
-  position: absolute;
-}
-
-
-.rOpt {
-	padding: 8px 8px 8px 32px;
-  position: fixed;
-  background-color: rgba(0,0,0,0.5);/**transparent*/
-  top: 0;
-  right: 0;
-  /**overflow-x: hidden;*/
-  /**transition: 0.5s;*/
-  /**padding-top: 40px;*/
-}
 
 .rOptItem a {
   padding: 8px 8px 8px 32px;
@@ -144,11 +125,8 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 
-.tst {float:left}
-
 .sett_item {
-  margin-bottom: -3px;
-  margin-right: 80px;
+  /*margin-bottom: -13px;*/
   padding: 10px;
 }
 
@@ -165,15 +143,15 @@ input[type=range]::-webkit-slider-thumb {
 h2 {color: #55acee;}
 h3 {color: #444444;}
 
-p {display: inline ; background-color: #34eedb; color: white; padding: 6px 24px; color: #55acee;} /**227cae*/
-p.odd  {padding: 6px 120px;}
+.sett_item p  {display: inline ; background-color:#7df2e6; color: white; padding:0.3em 2em; color:#1379c5;} /** bg #34eedb   c #085c9b #55acee 227cae    6px 24px;*/
+.sett_item p.odd  {padding: 0.3em 6em;}
 
 
 
-a.btS {background-color: #aa55ff; padding: 4px 12px; margin: 4px 12px;}
-a.btL { padding: 4px 12px; margin: 4px 12px;} /**34ffaa*/
+a.btS {padding:0.3em 0.7em; margin: 4px 10px; background-color: #aa55ff; }
+a.btL {padding:0.3em 0.7em; margin: 4px 10px;} /**34ffaa*/
 
-.bt {background-color: #3498db; color: white;	padding: 15px 22px;  border-radius: 8px;}
+.bt {background-color: #3498db; color: white; padding: 0.7em 1.1em;  border-radius: 0.4em;} /** square btn + - around sett_item*/
 .bt:hover {background-color: #aabb00;	 cursor:pointer;}
 
 .on {background-color: #3498db;}
@@ -183,6 +161,26 @@ a.btL { padding: 4px 12px; margin: 4px 12px;} /**34ffaa*/
 .off:active {background-color: #2c3e50;}
 
 .na {color: #333333; background-color: #000000;}
+
+/**@media only screen and (max-device-width : 640px) {*/
+.slider{
+	width: 95% !important; 
+	margin: 2vh;
+}
+/**
+}
+@media screen and (min-width: 1024px){
+.slider{
+	width: 98%;
+	outline: none;
+	opacity: 0.6;
+	margin: 1vh;
+}
+.slider:hover {
+	opacity: 1;
+}
+}
+*/
 
 
 
@@ -315,9 +313,8 @@ div.scrollmenu{
 div.scrollmenu a {
   display: block; /**inline-block;  for horizontal*/
   color: white;
-  text-align: center;
-  padding: 14px;
-  text-decoration: none;
+  padding: 0.2em;
+  margin: 0.1em;
 }
 div.scrollmenu a:hover {
   background-color: #777;
@@ -327,16 +324,6 @@ div.scrollmenu a:hover {
   overflow-y: auto;
 }
 
-
-.slider{
-	width: 100%;
-	outline: none;
-	opacity: 0.7;
-	margin: 14px;
-}
-.slider:hover {
-	opacity: 1;
-}
 
 
 
@@ -348,26 +335,22 @@ div.scrollmenu a:hover {
 	width: 100%;
 	border: none;
 	text-align: left;
-	outline: none;
-	font-size: 15px;
-
+	font-size: 1em;
 	margin-top: 14px;
 }
 
 .collap_content.open {
 	display: block;
 }
-
 .collap_active, .collap:hover {
 	background-color: #655;
 }
 .collap_content {
-	padding: 0 18px;
 	display: none;
 	overflow: hidden;
 	background-color: #f1f1f1;
 }
-							.tst {position: absolute; font-size: 10px; text-align: left;  top: 4px; left: 4px;}
+
 
 table, td {border:1px solid/**black*/;}
 .pin
@@ -566,6 +549,8 @@ for (i = 0; i < coll.length; i++){
   });
 }
 init();
+
+ //$('tst').innerHTML=window.screen.availHeight+'<br/>'+window.screen.height
 }
 document.addEventListener('DOMContentLoaded',function(){setup();});
 function touchHandler(ev)
@@ -638,15 +623,32 @@ for (var i = 0; i < els.length; i++){
 </script>
 </head>
 <body>
-	<i class="tst abs" id="tst">test responce:</i>
-
-<h2>HTML ws2812b control page <a href="#">v0.4</a> <a href="mailto:pavel.b.kr12@gmail.com?subject=2812,soft">pavel.b.kr12@gmail.com</a> </h2> 
+<p class='tst'>
+<a id="tst">test responce:</i><br/>
 Current effect: <b id="eff_nm_current"></b> settings: <a id="sett_lnk">?</a>
+</p>
 
-<div class="rOpt">
+<button type="button" class="collap">global</button>
+<div class="bgGr collap_content">
+<h2>HTML ws2812b control page <a href="#">v0.4</a> <a href="mailto:pavel.b.kr12@gmail.com?subject=2812,soft">pavel.b.kr12@gmail.com</a> </h2> 
+ <!-- <div class="rOpt"> --> <!--to make float -->
 <p class="btn red sender rOptItem" href="P">Pause sending data</p>
 <p class="btn blue rOptItem" onmousedown="toggleSliders()">togle sliders</p>
+<!-- </div> -->
+
+<div class="bgGr">
+<a class="sender btn green" href="effN=10">N off</a>
+<a class="sender btn green" href="effN=249">N random</a>
+<!--<a class="sender btn green" href="effN=251">animate_to_slot1</a>-->
+<a class="sender btn green" href="effN=252">animate_SW</a><br/>
+<a class="sender btn green" href="effN=250">N random_demo_animated_SW</a>
+<a class="sender btn green" href="effN=253">N predefined_show_seq</a><br/>
+<a class="sender btn green" href="effN=254">N random_demo_fast_SW</a>
+<a class="sender btn green" href="effN=255">N random_demo_SW</a><br/><br/>
 </div>
+
+</div>
+
 
 <button type="button" class="collap">map to matrix</button>
 <div class="bgGr collap_content">
@@ -657,18 +659,12 @@ Current effect: <b id="eff_nm_current"></b> settings: <a id="sett_lnk">?</a>
  <a class="sender btn green" href="effN=245">bMap_type_mirror_half</a>
  <a class="sender btn green" href="effN=246">bMap_type_history</a>
 </div>
-<!--
-<button type="button" class="collap">other global effects</button>
-<div class="bgGr collap_content">
-	<hr/>
-	<hr/>
-</div>
- -->
+
 <button type="button" class="collap">PWM dimer</button>
 <div class="bgGr collap_content open">
 <hr/>
 <!-- )HTM" constantScript2 R"HTM( -->
-<table id="pcb" style="width:22%;height:40%"></table>
+<table id="pcb" style="width:26vh;height:33vh"></table>
 <button onmousedown="recalculate_vt_all(true)">send</button>
 <!-- <button onmousedown="create_PWM_Plot()">create</button> -->
 
@@ -720,10 +716,10 @@ function newP(x, y, nm){
 }
 function fillTable(){
  s="";
- for(i=0;i<14;i++)
+ for(i=0;i<13;i++) //for(i=0;i<15;i++)
  {
 	s+='<tr><td id="'+0+"_"+i+'" class="pin"/>';
-	if(i==0)s+='<td rowspan=14 id="pinSelN" class="tc"/>';
+	if(i==0)s+='<td rowspan=13 id="pinSelN" class="tc"/>'; //15
 	s+='<td  id="'+1+"_"+i+'" class="pin"/></tr>';
 }
  $('pcb').innerHTML+=s;
@@ -774,6 +770,17 @@ var pt_M=9;
 var pt_Mlim=1000;
 aplot=$("pwm_plot");
 
+
+function vh(v) {
+  var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+  return (v * h) / 100;
+}
+/*
+function vw(v) {
+  var w = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+  return (v * w) / 100;
+}
+*/
 function dragElement(el){
  var pos1=0,pos2=0,pos3=0,pos4=0;
   /**
@@ -830,15 +837,16 @@ function dragElement(el){
 	}
 	else
 	{
+		var centerWx=vh(2);
 	 if(PlotPoints[el.id]<plotPtM-1) //no connection to points of min and max
 	 {
 	 nm_next="pwm_p"+(PlotPoints[el.id]+1)
-	 moveDivLine((el.id+"l"), el.offsetLeft+22,el.offsetTop+22, $(nm_next).offsetLeft+22,$(nm_next).offsetTop+22)
+	 moveDivLine((el.id+"l"), el.offsetLeft+centerWx,el.offsetTop+centerWx, $(nm_next).offsetLeft+centerWx,$(nm_next).offsetTop+centerWx)
 	 }
 	 if(PlotPoints[el.id]>1)
 	 {
 	 nm_prev="pwm_p"+(PlotPoints[el.id]-1)
-	 moveDivLine((nm_prev+"l"), el.offsetLeft+22,el.offsetTop+22, $(nm_prev).offsetLeft+22,$(nm_prev).offsetTop+22)
+	 moveDivLine((nm_prev+"l"), el.offsetLeft+centerWx,el.offsetTop+centerWx, $(nm_prev).offsetLeft+centerWx,$(nm_prev).offsetTop+centerWx)
 	 }
 	}
   }
@@ -1014,7 +1022,7 @@ TODO
 </div>
 -->
 
-<button type="button" class="collap">eff wave</button>
+<button type="button" class="collap">eff wave, cube</button>
 <div class="bgGr collap_content">
 <!--
 possible syntax:
@@ -1052,6 +1060,7 @@ this parces in  "$$('sender'); ...."
   <!-- <a class="sender btn blue" href="indexOrBits=20">cubicwave8</a> -->
   <!-- <div value="indexOrBits" class="sett_item">function</div> -->
 <hr/>
+<div class="scrollmenuFlex" id="effsCube"></div> <!-- filling by linksGenerator('Cub') -->
 <hr/>
 </div>
 
@@ -1076,17 +1085,6 @@ this parces in  "$$('sender'); ...."
 </div>
 </div>
 
-<div class="bgGr">
-<a class="sender btn green" href="effN=10">N off</a>
-<a class="sender btn green" href="effN=249">N random</a>
-<!--<a class="sender btn green" href="effN=251">animate_to_slot1</a>-->
-<a class="sender btn green" href="effN=252">animate_SW</a><br/>
-<a class="sender btn green" href="effN=250">N random_demo_animated_SW</a>
-<a class="sender btn green" href="effN=253">N predefined_show_seq</a><br/>
-<a class="sender btn green" href="effN=254">N random_demo_fast_SW</a>
-<a class="sender btn green" href="effN=255">N random_demo_SW</a><br/><br/>
-</div>
-
 <div class="bgOr">
 <div id="btS">
 <b>save to slot :</b>
@@ -1098,8 +1096,7 @@ this parces in  "$$('sender'); ...."
 </div>
 
 <div class="bgGr">
-<br/>
-<div class="scrollmenuFlex" id="effsCube"></div> <!-- filling by linksGenerator('Cub') -->
+
 <!-- 
 <hr/>
 List may contain disabled effect that lead to RUNDOM eff.
