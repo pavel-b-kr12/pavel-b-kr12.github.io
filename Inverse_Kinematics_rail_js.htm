@@ -1,0 +1,172 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.0/p5.js"></script>
+    <script>
+
+/*
+ * Inverse_Kinematics_1 
+ * Programm used to validate an inverse kinematics algorithm for a Robotic Arm
+ *
+ * Author: Diego Pontones, Pavel B
+ * Date: February 17, 2011 , 2020.03.20
+ * Copyright: Diego Pontones
+ * email: diego_pontones@yahoo.com, pavel.b.kr12@gmail.com
+ */
+
+var nLinks = 3;
+var nGripperAngles = 5;
+var GripperAngle = 0;
+var linkStrokeW = [28, 18, 12];
+var linkColor = ["#00D000", "#0000FF", "#FF0000"];
+var l = [0, 100, 100, 60];
+var rail0 = 250; //Arm Origen in Screen Coordinates
+var rail = 50; 
+var rail_M = 330; 
+var v0 = 360; //Arm Origen in Screen Coordinates
+
+var w = []; //horizontal coordinate, corresponds to P0, P1, P2 etc
+var z = []; //vertical coordinate
+var a = [];  //angle for the link, reference is previous link
+var tw, tz; //target coordinate for the actuator (gripper)
+var tw0, tz0; //Previous target coordinate for the actuator (gripper) that was inside the robot reach
+var l12;
+var a12;
+
+function setup() {
+  createCanvas(900, 500); //drawing window size
+  smooth(); 
+  w[0] = 0;  // Set Origen
+  z[0] = 0;  // Set Origen
+  tw0=100; // Initiakl Target
+  tz0=100;
+}
+
+function draw() {
+  background(240);
+  drawGripperMenu();
+  drawAxes();
+  tw = mouseX - (rail0+rail);
+  tz = v0 - mouseY ;
+  calcP2(); //set  l12
+  if (l12>l[1]+l[2] || l12<25){
+    
+    if(l12<25)
+    {
+       if(a12>=-1 && a12<=1) rail-=5;
+       else rail+=5;
+    }
+    else
+    {
+      if(mouseX>rail0+rail) rail+=5;
+      else rail-=5;
+    }
+    
+    if(rail<0) rail=0;
+    else 
+    if(rail>rail_M) rail=rail_M;
+
+    
+    //textAlign(CENTER); 
+    fill("#FF0000");
+    text("No Solution",240,50);
+    text("Move mouse povarer towards the origin.",240,64);
+    tw=tw0;
+    tz=tz0;
+    calcP2();
+  }
+    calcP1();
+    drawLinks();
+    tw0=tw;
+    tz0=tz;
+}
+
+function drawAxes(){
+  strokeWeight(1);
+  stroke(0);
+  line(rail0, v0, rail0+rail_M,v0);
+  line(rail0, v0, rail0,v0-259);
+}
+
+function mouseWheel(e) {
+  GripperAngle=GripperAngle%360+e.delta/8;
+}
+
+var drawWalY;
+
+function drawWal( val,  s)
+{
+  if(val==undefined) return;
+  text(Math.round(val*10)/10, 20, drawWalY); text(s, 120,drawWalY);
+  drawWalY+=20;
+}
+
+function drawGripperMenu() {
+  //textAlign(CENTER);
+  text("Robot Arm Inverse Kinematics Algorithm Simulation",250,34);
+
+  fill(0);
+  textAlign(LEFT);  
+  
+  //textAlign(CENTER);
+  drawWalY=90;
+  fill("#2155FF");
+  textSize(22);
+  drawWal(GripperAngle, "GripperAngle, change with mouse wheel");
+  fill(0);
+  drawWal(rail, "rail pos L");
+  drawWalY+=22;
+  textSize(17);
+  drawWal((l12), "l12");
+  drawWal((a12), "a12");
+  
+  
+  drawWal((w[0]), "w[0]");
+  drawWal((w[1]), "w[1]");
+  drawWal((w[2]), "w[2]");
+  
+    
+  drawWal((a[0]), "a[0]");
+  drawWal((a[1]), "a[1]");
+  drawWal((a[2]), "a[2]");
+  
+    
+    
+  drawWal((z[0]), "z[0]");
+  drawWal((z[1]), "z[1]");
+  drawWal((z[2]), "z[2]");
+}
+
+function calcP2(){
+  w[2]=tw-cos(radians(GripperAngle))*l[3];
+  z[2]=tz-sin(radians(GripperAngle))*l[3];
+  l12 = sqrt(sq(w[2])+sq(z[2]));
+}
+
+function calcP1(){
+  a12=atan2(z[2],w[2]);
+  a[1]=acos((sq(l[1])+sq(l12)-sq(l[2]))/(2*l[1]*l12))+a12;
+  w[1]=cos(a[1])*l[1];
+  z[1]=sin(a[1])*l[1];
+}
+
+function drawLinks(){
+  for(var i=0; i<2; i++) {  
+    strokeWeight(linkStrokeW[i]);
+    stroke(linkColor[i]);
+    line(rail0+rail+w[i], v0-z[i],rail0+rail+w[i+1], v0-z[i+1]);
+  }
+  strokeWeight(linkStrokeW[2]);
+  stroke(linkColor[2]);
+  line(rail0+rail+w[2], v0-z[2],rail0+rail+ tw,v0- tz);
+  fill(0);
+  strokeWeight(0);
+  stroke(0);
+  ellipse(rail0+rail+ tw,v0- tz,10,10);
+}
+
+	
+	</script>
+  </head>
+  <body>
+  </body>
+</html>
