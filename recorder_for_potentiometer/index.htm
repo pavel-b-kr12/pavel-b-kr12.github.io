@@ -479,7 +479,7 @@ new Dygraph(div, "ny-vs-sf.txt", {
                             drawPoints: true,
                             showRoller: true,
                             valueRange: [-300.0, 1024.0],
-                            labels: ['Time', 'pot', 'spd', 'acc', 'pos']
+                            labels: ['Time', 'pot', 'spd*200', 'acc*3k', 'pos']
                           });
 
 
@@ -518,13 +518,15 @@ pot.oninput = function() {
 	pos=0;
 	if(data.length>1)
 	{
-	 spd=v-data[data.length-2][1];
+	 dt1=(t-data[data.length-2][0])
+	 spd=(v-data[data.length-2][1])/dt1;
 		if(data.length>2)
 		{
-		 acc=spd-data[data.length-2][2]/4
+		 dt2=(data[data.length-1][0]-data[data.length-2][0])
+		 acc=(spd-data[data.length-2][2]/200) /dt2
 		}
 	}
-	data.push([new Date(t), v, spd*4, acc*2, pos]);
+	data.push([new Date(t), v, spd*200, acc*3000, pos]);
 	g.updateOptions( { 'file': data } );
   }
   
