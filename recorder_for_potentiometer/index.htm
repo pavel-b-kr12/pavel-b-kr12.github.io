@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html>
+<script src="common.js"></script>
+
+<script type="text/javascript"  src="dygraph.min.js"></script>
+<link rel="stylesheet" src="dygraph.css" />
+
+<style>
+.lcd {
+    background: black;
+    color: aqua;
+    font-size: 32px;
+    font-family: 'Courier New', monospace;
+	width: 512px;
+	height: 128px;
+    padding: 11px;
+}
+
+pre {
+    height: 22em;
+    line-height: 1em;
+    overflow: scroll;
+}
+
+
+input.cmn-toggle-round + label {
+  padding: 2px;
+  width: 100px;
+  height: 30px;
+  background-color: #dddddd;
+  -webkit-border-radius: 30px;
+  -moz-border-radius: 30px;
+  -ms-border-radius: 30px;
+  -o-border-radius: 30px;
+  border-radius: 30px;
+}
+input.cmn-toggle-round + label:before, input.cmn-toggle-round + label:after {
+  display: block;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  bottom: 1px;
+  content: "";
+}
+input.cmn-toggle-round + label:before {
+  right: 1px;
+  background-color: #f1f1f1;
+  -webkit-border-radius: 30px;
+  -moz-border-radius: 30px;
+  -ms-border-radius: 30px;
+  -o-border-radius: 30px;
+  border-radius: 30px;
+  -webkit-transition: background 0.4s;
+  -moz-transition: background 0.4s;
+  -o-transition: background 0.4s;
+  transition: background 0.4s;
+}
+input.cmn-toggle-round + label:after {
+  width: 40px;
+  background-color: #fff;
+  -webkit-border-radius: 100%;
+  -moz-border-radius: 100%;
+  -ms-border-radius: 100%;
+  -o-border-radius: 100%;
+  border-radius: 100%;
+  -webkit-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  -webkit-transition: margin 0.4s;
+  -moz-transition: margin 0.4s;
+  -o-transition: margin 0.4s;
+  transition: margin 0.4s;
+}
+input.cmn-toggle-round:checked + label:before {
+  background-color: #8ce196;
+}
+input.cmn-toggle-round:checked + label:after {
+  margin-left: 60px;
+}
+
+.cmn-toggle {
+  position: absolute;
+  margin-left: -9999px;
+  visibility: hidden;
+}
+.cmn-toggle + label {
+  display: block;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+
+
+
+.row {
+  display: -webkit-flex;
+  display: flex;
+}
+
+
+
+
+.slidecontainer {
+  width: 100%;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 25px;
+  border-radius: 5px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+.slider_input {
+  -webkit-appearance: none;
+  width: 50%;
+  height: 15px;
+  border-radius: 2px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider_input:hover {
+  opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #4CAF50;
+  cursor: pointer;
+}
+</style>
+
+<body>
+
+<div class="row">
+<div id="graphdiv"  style="width:800px; height:400px;"></div>
+<textarea  onpaste="onPasteTSV(this)" cols="10" rows="5">paste data from terminal</textarea>
+</div>
+    
+
+power:
+<div class="switch">
+<input id="cmn-toggle-1" class="cmn-toggle cmn-toggle-round"  type="checkbox" onchange="pow_checkbox_ch(event)" >
+<label for="cmn-toggle-1">123</label>
+</div>
+<br>	  
+<br>
+
+<h1>Input:</h1>
+<div class="slidecontainer">
+  <input type="range" min="0" max="1024" value="100" class="slider_input" id="pot"  disabled>
+  <p>Value: <span id="pot_v"></span></p>
+</div>
+<h3>Input US №2:</h3>
+<div class="slidecontainer">
+  <input type="range" min="0" max="1024" value="512" class="slider_input" id="US_input" disabled >
+  <p>Value: <span id="US_input_v"></span></p>
+</div>
+
+<h1>Motor pos:</h1>
+<!-- <h1><input type="button" value="Play:" onclick="Play()"></h1> -->
+<div class="slidecontainer">
+  <input type="range" min="0" max="2000" value="500" class="slider" id="US_motor_sensor">
+  <p>Value: <span id="US_motor_sensor_v"></span></p>
+</div>
+
+<input type="button" value="rec sw" onclick="rec_sw()">
+<input type="button" value="play sw" onclick="play_sw()">
+<input type="button" value="next slot" onclick="next_slot()">
+<input type="button" value="?" onclick="">
+
+
+<div id='lcd' class='lcd'>
+<!-- 128*64 /8..6 = 16..21 symbols-->
+...
+</div>
+
+
+<pre id="log"></pre>
+  
+	  
+
+
+
+<p id="demo"></p>
+
+<script>
+bPow=false;
+function bPow_sw(b)
+{
+ if(!b)
+ {
+ bLimitFound_L=false;
+ bLimitFound_R=false;
+ }
+ 
+ e=$('cmn-toggle-1');
+ 
+ if(b!=e.checked) 
+ {
+  e.checked=b;
+ }
+ if(bPow!=b)
+ {
+  if(b)
+  starting();
+  
+  bPow=b;
+ }
+
+}
+function pow_checkbox_ch(e)
+{
+ bPow_sw(e.target.checked); //console.log(e.target.checked)
+}
+
+
+limit_raw_L=300;
+limit_raw_R=1500;
+
+limit_L=0;
+limit_R=0;
+limit_range=0;
+
+bLimitFound_L=false;
+bLimitFound_R=false;
+
+function starting()
+{
+ bInputEnable=false;
+   $('pot').disabled=true;
+  $('US_input').disabled=true;
+  
+ v=parseInt($('US_motor_sensor').value);
+ if(!bLimitFound_L)
+ {
+  if(v>=limit_raw_L)
+  {
+  $('US_motor_sensor').value-=10;  //console.log(typeof(v),v)
+  }
+  else 
+  {
+   limit_L=v;
+   bLimitFound_L=true;
+  }
+ }
+ else
+ if(!bLimitFound_R)
+ {
+  if(v<=limit_raw_R) 
+  {
+  $('US_motor_sensor').value=v+15; //console.log(typeof(v), limit_raw_R,v)
+  }
+  else 
+  {
+   limit_R=v;
+   bLimitFound_R=true;
+  }
+ }
+ else 
+ {
+  limit_range=limit_R-limit_L;
+  $tx('lcd', 'lim: '+limit_L+" "+limit_R) ;
+  bInputEnable=true;
+  $('pot').disabled=false;
+  $('US_input').disabled=false;
+ return;
+ 
+ }
+
+ 
+ 
+ setTimeout(starting, 5);
+ 
+ 
+}
+
+
+arr_slots=[[[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]], ]
+//'pot', 'spd', 'acc', 'pos'
+var data_raw = arr_slots[0][0];
+var data = arr_slots[0][1]; //for plot
+slot0_nm='0 manual mode';
+slot_now=0; //0 is manual mode
+
+bRec=false;
+bPlay=false;
+data_pos_t=0;
+t_i=0; //data arr index
+data_E=0;
+
+	  
+function onPasteTSV(e) {
+ data_raw.length=0;
+ data.length=0;
+ 
+ var ar=e.value.split('\n');	
+ 
+ for(var i=0;i<ar.length;i++)
+ {
+  data_raw[i]=ar[i].split('\t');
+  if(data_raw[i].length>1)
+  data.push([ 
+  new Date( parseInt(data_raw[i][0]) )
+  , parseInt(data_raw[i][1] ) 
+  ]);
+ }
+ 
+  g.updateOptions( { 'file': data } );
+		
+ 
+  //console.log(data_raw);	 //el.value.split('\n')[0].split('\t')
+}
+
+
+//-----------------------------btn
+
+function LCD_show()
+{
+tx='slot '+slot_now+' ';
+if(bRec) tx+='rec'
+if(bPlay) tx+='play'
+tx+='\n'
+tx+= motor_pos();
+$tx('lcd', tx) ;
+}
+
+
+function rec_sw() {
+ bPow_sw(true);
+ 
+  bRec=!bRec;
+ /*
+ if(bPlay)
+ {} //continue rec from pos
+ else
+ {
+  if(bRec)
+  data_pos_t=0;
+ }
+ */
+ if(bRec)
+ {
+  t0=Math.floor(performance.now());
+  data_pos_t=0;
+  data_raw.length=0;
+  data.length=0;
+ }
+  
+
+ bPlay=false;
+ if(timer_ID_play!=null)  clearInterval( timer_ID_play );
+
+ 
+ LCD_show();
+}
+
+timer_ID_play=null
+function play_sw(b) {
+ //bPow_sw(true);
+ if(typeof(b) =='boolean') bPlay=b;
+ else
+ bPlay=!bPlay;
+ /*
+ if(bRec){}// play from pos
+ else
+ data_pos_t=0;
+ */
+ data_pos_t=0;
+ t0=Math.floor(performance.now());
+ 
+ bRec=false;
+ 
+ 
+ LCD_show();
+ 
+ data_E=data_raw.length;			//console.log('len', data_E);
+ 
+ if(bPow && bPlay)
+ {							//console.log(bPow, bPlay);
+	timer_ID_play=setInterval( play , 15);
+ }
+ else
+  clearInterval( timer_ID_play );
+
+
+}
+function next_slot() {
+ bPow_sw(true);
+ play_sw(false);
+ 
+ slot_now++;
+ if(slot_now>9) slot_now=0;
+ data_raw=arr_slots[slot_now][0];
+ data=arr_slots[slot_now][1];
+ LCD_show();
+}
+
+function play()
+{						//console.log(bPow, bPlayStarted);
+ if(!bPow)
+ {
+  clearInterval( timer_ID_play );
+  bPlay=false;
+  return;
+ }
+
+ if(data_raw.length==0) 
+ {
+	$tx('lcd', 'slot '+slot_now+ ' no data');
+	return;
+ }
+ 
+ t=parseInt(data_raw[t_i][0])
+										//console.log(performance.now(), t0, t);
+ if(performance.now()-t0 < t) return; //wait
+ t_i++;
+ if(t_i>=data_E) 
+ {
+ t_i=0;
+ t0=performance.now();
+ }
+ 
+	 //$tx('lcd', t_i+ ' '+data_raw[t_i][0]+' '+data_raw[t_i][1]) ;
+	 
+	 $('pot').value=parseInt(data_raw[t_i][1]);
+	 LCD_show();
+}
+
+
+
+
+/*
+new Dygraph(div, "ny-vs-sf.txt", {
+  legend: 'always',
+  title: 'NYC vs. SF',
+  showRoller: true,
+  rollPeriod: 14,
+  customBars: true,
+  ylabel: 'Temperature (F)',
+});
+*/
+
+	  /*
+      var t = new Date();
+      for (var i = 10; i >= 0; i--) {
+        var x = new Date(t.getTime() - i * 1000);
+        data.push([x, Math.random()]);
+      }
+	  */
+
+      var g = new Dygraph(document.getElementById("graphdiv"), data,
+                          {
+                            drawPoints: true,
+                            showRoller: true,
+                            valueRange: [-300.0, 1024.0],
+                            labels: ['Time', 'pot', 'spd', 'acc', 'pos']
+                          });
+
+
+var pot = document.getElementById("pot");
+var US_input = document.getElementById("US_input");
+
+var il=0;
+
+bInputEnable=false
+pot.oninput = function() {
+ bPow_sw(true);
+ //if(!bInputEnable) return;
+ 
+ v=parseInt(this.value);
+ US_input_v=parseInt(US_input.value);
+
+ /*
+  if(il==1000) 
+  {
+   il=0;
+   document.getElementById("log").innerText='';
+  }
+  il++;
+    */
+  if(bRec)
+  {
+  t=Math.floor(performance.now())-t0;
+  $("log").innerText=t+"\t"+ v+'\r\n'+document.getElementById("log").innerText;
+  
+  data_raw.push([t, v]);
+  
+        //var x = new Date();  // current time
+        //var y = Math.random();
+	spd=0;
+	acc=0;
+	pos=0;
+	if(data.length>1)
+	{
+	 spd=v-data[data.length-2][1];
+		if(data.length>2)
+		{
+		 acc=spd-data[data.length-2][2]/4
+		}
+	}
+	data.push([new Date(t), v, spd*4, acc*2, pos]);
+	g.updateOptions( { 'file': data } );
+  }
+  
+  //motor_v=motor_pos_(v, US_input_v)
+  LCD_show()
+}
+
+
+US_input.oninput = function() {
+//if(!bInputEnable) return;
+
+//v=parseInt(this.value);
+//US_input_v=parseInt(US_input.value);
+
+// motor_pos_(v, US_input_v)
+LCD_show()
+}
+
+function motor_pos_(v, US_input_v)
+{
+
+  v_out=limit_L+v/1024*limit_range +  (US_input_v/1024-0.5)*2*limit_range;
+  if(v_out<limit_L) v_out=limit_L;
+  else 
+  if(v_out>limit_R) v_out=limit_R;
+  $('US_motor_sensor').value=v_out;		//console.log(v, US_input_v, v_out)
+  return v_out;
+}
+
+function motor_pos()
+{
+ return parseInt($('pot').value)+" "+parseInt($('US_input').value)+" "+Math.floor( motor_pos_(parseInt($('pot').value), parseInt($('US_input').value)));
+}
+
+
+</script>
+
+</body>
+</html>
