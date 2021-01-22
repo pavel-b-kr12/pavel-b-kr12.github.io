@@ -22,6 +22,9 @@ pre {
     overflow: scroll;
 }
 
+.gray{
+ color: gray;
+}
 
 input.cmn-toggle-round + label {
   padding: 2px;
@@ -156,7 +159,10 @@ input.cmn-toggle-round:checked + label:after {
 </style>
 
 <body>
+<h2>UI functions in different modes:</h2>
 
+
+<div style="display:none">
 <div class="row">
 <div id="graphdiv"  style="width:800px; height:400px;"></div>
 <textarea  onpaste="onPasteTSV(this)" cols="10" rows="5">paste data from terminal</textarea>
@@ -170,46 +176,232 @@ power:
 </div>
 <br>	  
 <br>
+</div>
 
-<h1>Input:</h1>
+<h2 id='pot_str'>Input pos (pot linear):</h2>
 <div class="slidecontainer">
   <input type="range" min="0" max="1024" value="100" class="slider_input" id="pot"  disabled>
-  <p>Value: <span id="pot_v"></span></p>
+  <!-- <p>Value: <span id="pot_v"></span></p> -->
 </div>
-<h3>Input US №2:</h3>
+<h3 id='pot_spd_str'>Input speed (pot rotary):</h3>
+<div class="slidecontainer">
+  <input type="range" min="0" max="1024" value="256" class="slider_input" id="pot_spd" disabled >
+  <!-- <p>Value: <span id="pot_spd_v"></span></p> -->
+</div>
+
+<div style="display:none">
+<h3>Input amplitude mul (US-015):</h3>
 <div class="slidecontainer">
   <input type="range" min="0" max="1024" value="512" class="slider_input" id="US_input" disabled >
   <p>Value: <span id="US_input_v"></span></p>
 </div>
 
-<h1>Motor pos:</h1>
-<!-- <h1><input type="button" value="Play:" onclick="Play()"></h1> -->
+<h1>Motor pointer:</h1>
 <div class="slidecontainer">
   <input type="range" min="0" max="2000" value="500" class="slider" id="US_motor_sensor">
   <p>Value: <span id="US_motor_sensor_v"></span></p>
 </div>
 
-<input type="button" value="rec sw" onclick="rec_sw()">
-<input type="button" value="play sw" onclick="play_sw()">
-<input type="button" value="next slot" onclick="next_slot()">
-<input type="button" value="?" onclick="">
+<h1>Motor predict:</h1>
+<div class="slidecontainer">
+  <input type="range" min="0" max="2000" value="500" class="slider" id="US_motor_smooth">
+  <p>Value: <span id="US_motor_smooth_v"></span></p>
+</div>
 
+</div>
+
+<h3>4 butons:</h2>
+<button id='btn_rec' onclick="mode.rec_sw()"></button><br>
+<button id='btn_play' onclick="mode.play_sw()"></button><br>
+<button id='btn_next' onclick="mode.next_slot()"></button><br>
+<button id='btn_pause' onclick="mode.pause()"></button><br>
+<br>
+<!-- <input type="checkbox" onChange="bPlay=this.checked;play_v=parseInt($('pot').value)">debug bPlay -->
+<br>
 
 <div id='lcd' class='lcd'>
 <!-- 128*64 /8..6 = 16..21 symbols-->
 ...
 </div>
 
-
+<div style="display:none">
+<h3 id="mode_inf"></h3>
 <pre id="log"></pre>
-  
-	  
-
-
 
 <p id="demo"></p>
+</div>
 
 <script>
+bPlayCyclic=false;
+slot_now=0; //0 is manual mode
+
+bRec=false;
+bPlay=false;
+limit_raw_L=300;
+limit_raw_R=1500;
+
+limit_L=0;
+limit_R=0;
+limit_range=0;
+
+bLimitFound_L=false;
+bLimitFound_R=false;
+
+UI=
+{
+ manual:
+ {
+   inf:"default, manual control mode",
+   setup: function(){
+    $('btn_rec').innerHTML='rec sw';
+    $('btn_play').innerHTML='play sw';
+    $('btn_next').innerHTML='next slot in "R" stack (select slot 8 for Ultrasonic test, slot 9 for set max speed, acceleration, cycling Play';
+    $('btn_pause').innerHTML="";//(b2ndStackMode?'P':'R')+' stack to change'; //TODO or single/cyclic play
+    $('pot_str').innerText='position (or value)';
+    $('pot_spd_str').innerText='position (or value), precission control';
+   },
+
+   rec_sw:()=>
+   {
+     rec_sw();
+	 setMode(UI.rec);
+   },
+   play_sw:()=>
+   {
+     play_sw();
+	 setMode(UI.play);
+   },
+   next_slot:()=>
+   {
+	 next_slot();
+   },
+   pause:()=>
+   {
+	 toggleb2ndStackMode();
+	 mode.setup();
+   }
+ },//--------------------------------------------------------
+ rec:
+ {
+   inf:"recording mode",
+   setup: function(){
+    $('btn_rec').innerHTML='stop rec sw';
+    $('btn_play').innerHTML='<i class="gray">play additional slot if selected</i>';
+    $('btn_next').innerHTML='<i class="gray">start/stop smooth (and rec this)</i>';
+    $('btn_pause').innerHTML='pause';
+    $('pot_str').innerText='position (or value)';
+    $('pot_spd_str').innerText='position (or value), precission control';
+   },
+
+   rec_sw:()=>
+   {
+	 rec_sw();
+	 setMode(UI.manual);
+   },
+   play_sw:()=>
+   {
+	
+   },
+   next_slot:()=>
+   {
+
+   },
+   pause:()=>
+   {
+	 pause();
+   }
+ },//--------------------------------------------------------
+ play:
+ {
+   inf:"play mode",
+   setup: function(){
+    $('btn_rec').innerHTML='<i class="gray">record to R stack</i>';
+    $('btn_play').innerHTML='stop play';
+    $('btn_next').innerHTML='<i class="gray">start/stop smooth</i>';
+    $('btn_pause').innerHTML='pause';
+    $('pot_str').innerText='add position (or value) to playback (if>0 && <max)';
+    $('pot_spd_str').innerText='playback speed';
+   },
+
+   rec_sw:()=>
+   {
+
+   },
+   play_sw:()=>
+   {
+		play_sw();
+		setMode(UI.manual);
+   },
+   next_slot:()=>
+   {
+
+   },
+   pause:()=>
+   {
+	 pause();
+   }
+ },
+ settings:
+ {
+   inf:"settings mode",
+   setup: function(){
+    $('btn_rec').innerHTML=' ';
+    $('btn_play').innerHTML=' ';
+    $('btn_next').innerHTML='next save slot (select slot 8 for Ultrasonic test, slot 9 for set max speed, acceleration, cycling Play';
+    $('btn_pause').innerHTML="play cyclic mode sw";//(b2ndStackMode?'P':'R')+' stack to change'; //TODO or single/cyclic play
+    $('pot_str').innerText='max acceleration';
+    $('pot_spd_str').innerText='max speed';
+   },
+
+   rec_sw:()=>
+   {
+     rec_sw();
+	 //setMode(UI.rec);
+   },
+   play_sw:()=>
+   {
+     play_sw();
+	 //setMode(UI.play);
+   },
+   next_slot:()=>
+   {
+	 next_slot();
+
+   },
+   pause:()=>
+   {
+	 bPlayCyclic=!bPlayCyclic;
+	 LCD_show();
+   }
+ }
+}
+
+var mode;
+var b2ndStackMode=false;
+
+function setMode(m)
+{	console.log(m, m.inf);
+ mode=m;
+ $('mode_inf').innerText=m.inf;
+ m.setup();
+ try {
+ LCD_show();
+ }
+ catch(e) {}
+}
+
+setMode(UI.manual);
+
+function pause(){}
+
+function toggleb2ndStackMode()
+{
+ b2ndStackMode=!b2ndStackMode;
+ //## draw mode mark
+ LCD_show();
+}
+
+
 bPow=false;
 function bPow_sw(b)
 {
@@ -240,21 +432,14 @@ function pow_checkbox_ch(e)
 }
 
 
-limit_raw_L=300;
-limit_raw_R=1500;
 
-limit_L=0;
-limit_R=0;
-limit_range=0;
-
-bLimitFound_L=false;
-bLimitFound_R=false;
 
 function starting()
 {
  bInputEnable=false;
-   $('pot').disabled=true;
+  $('pot').disabled=true;
   $('US_input').disabled=true;
+  $('pot_spd').disabled=true;
   
  v=parseInt($('US_motor_sensor').value);
  if(!bLimitFound_L)
@@ -285,10 +470,11 @@ function starting()
  else 
  {
   limit_range=limit_R-limit_L;
-  $tx('lcd', 'lim: '+limit_L+" "+limit_R) ;
+  //$tx('lcd', 'lim: '+limit_L+" "+limit_R) ;
   bInputEnable=true;
   $('pot').disabled=false;
   $('US_input').disabled=false;
+  $('pot_spd').disabled=false;
  return;
  
  }
@@ -306,10 +492,7 @@ arr_slots=[[[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]], [[],[]
 var data_raw = arr_slots[0][0];
 var data = arr_slots[0][1]; //for plot
 slot0_nm='0 manual mode';
-slot_now=0; //0 is manual mode
 
-bRec=false;
-bPlay=false;
 data_pos_t=0;
 t_i=0; //data arr index
 data_E=0;
@@ -341,12 +524,23 @@ function onPasteTSV(e) {
 //-----------------------------btn
 
 function LCD_show()
-{
+{ console.log(slot_now, bPlayCyclic)
+
 tx='slot '+slot_now+' ';
 if(bRec) tx+='rec'
 if(bPlay) tx+='play'
+if(slot_now==8) tx+='US testing';
+else
+if(slot_now==9)
+{tx+=' settings'
+}
+if(bPlayCyclic) tx+="  ♶ Cycle-play"
+
+if(slot_now<8)
+{
 tx+='\n'
 tx+= motor_pos();
+}
 $tx('lcd', tx) ;
 }
 
@@ -403,6 +597,9 @@ function play_sw(b) {
  
  if(bPow && bPlay)
  {							//console.log(bPow, bPlay);
+	play_t_last=0;
+	play_pos_t=0;
+	
 	timer_ID_play=setInterval( play , 15);
  }
  else
@@ -416,10 +613,21 @@ function next_slot() {
  
  slot_now++;
  if(slot_now>9) slot_now=0;
+ 
+ if(slot_now==9) setMode(UI.settings);
+ else
+ if(slot_now==0)
+	setMode(UI.manual);
+	
  data_raw=arr_slots[slot_now][0];
  data=arr_slots[slot_now][1];
  LCD_show();
 }
+
+var play_t_last=0;
+var play_pos_t=0;
+var play_spd=1.0;
+var play_v=0;
 
 function play()
 {						//console.log(bPow, bPlayStarted);
@@ -436,20 +644,34 @@ function play()
 	return;
  }
  
- t=parseInt(data_raw[t_i][0])
-										//console.log(performance.now(), t0, t);
- if(performance.now()-t0 < t) return; //wait
- t_i++;
  if(t_i>=data_E) 
  {
  t_i=0;
  t0=performance.now();
+ play_pos_t=0;
+ play_t_last=0;
  }
+ 
+ 
+ play_spd=$('pot_spd').value/1024*4;
+ if(play_spd>0.95 && play_spd<1.05) play_spd=1;
+ 
+ dt=(play_t_last==0)?0:performance.now()-play_t_last;
+ play_t_last=performance.now();
+ play_pos_t+=dt*play_spd; //current time
+ t=parseInt(data_raw[t_i][0]) //desired play time from file
+										//console.log(performance.now(), t0, t);
+								//console.log(play_pos_t, t);
+ if(play_pos_t < t) return; //wait
+ 
+ 
+
  
 	 //$tx('lcd', t_i+ ' '+data_raw[t_i][0]+' '+data_raw[t_i][1]) ;
 	 
-	 $('pot').value=parseInt(data_raw[t_i][1]);
+	 play_v=parseInt(data_raw[t_i][1]);
 	 LCD_show();
+	 t_i++;
 }
 
 
@@ -531,6 +753,7 @@ pot.oninput = function() {
   }
   
   //motor_v=motor_pos_(v, US_input_v)
+  if(!bPlay)
   LCD_show()
 }
 
@@ -545,24 +768,82 @@ US_input.oninput = function() {
 LCD_show()
 }
 
-function motor_pos_(v, US_input_v)
+function motor_pos_(v, amplitude_v, shift_v)
 {
-
-  v_out=limit_L+v/1024*limit_range +  (US_input_v/1024-0.5)*2*limit_range;
+  v=(v/1024*limit_range );
+  
+  if(bPlay)
+  {
+	amplitude=amplitude_v/1024*2;
+	shift=( shift_v/1024-0.5)*2*limit_range;
+	v_out= limit_L+ v*amplitude +shift;
+  }
+  else
+	v_out=limit_L+v;
   if(v_out<limit_L) v_out=limit_L;
   else 
   if(v_out>limit_R) v_out=limit_R;
-  $('US_motor_sensor').value=v_out;		//console.log(v, US_input_v, v_out)
+  $('US_motor_sensor').value=v_out;		//if(bPlay) console.log(v,"=", amplitude, shift, v_out) //console.log(v, US_input_v, v_out)
+
+
+
+  
+  d=(v_out-v_smooth);
+  
+  dir_spd=v_smooth_spd>0;
+  
+  d_br=v_smooth_spd*v_smooth_spd/(Math.abs(v_smooth_acc)*2)*dir_spd;
+  
+
+
+  v_smooth_acc=d_br>d?-1:1;
+  if(Math.abs(d_br-d)<Math.abs(d/50)) v_smooth_acc/=2;
+  
+  v_smooth_spd+=v_smooth_acc;	   console.log(d, d_br,'=', v_smooth_acc,v_smooth_spd,v_smooth)
+  v_smooth+=v_smooth_spd;
+  if(v_smooth<limit_L) v_smooth=limit_L;
+  else 
+  if(v_smooth>limit_R) v_smooth=limit_R;
+  $('US_motor_smooth').value=v_smooth
+  
+  $('d_id').innerText=d
+  $('d_br_id').innerText=d_br
+  $('v_smooth_acc_id').innerText=v_smooth_acc
+  $('v_smooth_spd_id').innerText=v_smooth_spd
+  
+  
+  
   return v_out;
 }
+var v_smooth_acc=1;
+var v_smooth_spd=0;
+var v_smooth=110;
+
 
 function motor_pos()
 {
- return parseInt($('pot').value)+" "+parseInt($('US_input').value)+" "+Math.floor( motor_pos_(parseInt($('pot').value), parseInt($('US_input').value)));
+ 
+ pot_v= parseInt($('pot').value)
+ US_input_v=parseInt($('US_input').value)
+ 
+ v=bPlay?play_v:pot_v;
+ amplitude_v=US_input_v;
+ shift_v=bPlay?pot_v:0;
+ 
+ motor_pos_v=Math.floor( motor_pos_(v, amplitude_v, shift_v))
+ 
+ //console.log(pot_v,US_input_v, " = ",v, amplitude_v, shift_v, "=", motor_pos_v);
+ 
+ return pot_v+" "+US_input_v+" "+motor_pos_v+" "+play_spd.toFixed(2);
 }
 
 
 </script>
-
+<div style="display:none">
+<p id='d_id'></p>
+<p id='d_br_id'></p>
+<p id='v_smooth_acc_id'></p>
+<p id='v_smooth_spd_id'></p>
+</div>
 </body>
 </html>
