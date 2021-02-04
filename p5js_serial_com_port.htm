@@ -1,0 +1,451 @@
+<html>
+  <head>
+  <meta charset="utf-8">
+    <script type="text/javascript" src="lib/d3.v5.min.js"></script>
+    <script type="text/javascript" src="lib/ola.min.js"></script>
+    <script type="text/javascript" src="lib/smoothie.js"></script>
+    <script src="lib/p5.min.js"></script>
+	<style>
+	.pa {color: red;}
+	. viewport {position: absolute;}
+	</style>
+	<style>
+	<!-- plot -->
+	body {
+  margin: 0;
+  padding: 0;
+  font-family: Sans-Serif;
+}
+
+.legend {
+  margin: 10px;
+}
+
+.dot {
+  margin-right: 10px;
+}
+
+.dot::before {
+  content: '';
+  width: 15px;
+  height: 15px;
+  margin-bottom: -2px;
+  margin-right: 5px;
+  border-radius: 10px;
+  display: inline-block;
+  background: red;
+}
+
+.dot.control::before {
+  background: rgba(0, 0, 255, 0.4);
+}
+
+.dot.interpolated::before {
+  background: rgba(255, 0, 0, 0.6);
+}
+
+.container {
+  position: relative;
+  margin: 10px;
+  box-shadow: 0 0 0 1px #ccc;
+  border-radius: 8px;
+  height: 200px;
+  overflow: hidden;
+}
+
+canvas {
+  <!-- transform: scale(0.5); -->
+  transform-origin: top left;
+}
+
+	</style>
+	<script>
+	dataSize=1024;
+	hh=dataSize;
+	ww=dataSize;
+	xc=dataSize/2;
+	yc=xc;
+	xM=dataSize-1;
+	yM=dataSize-1;
+	</script>
+	
+	<script src="common.js"></script>
+	<script>
+
+function setup() {
+  createCanvas(dataSize, dataSize);
+}
+
+var dt_avg=10;
+var bStop=false;
+var il=0;
+function draw() {
+
+if(bStop) return;
+	var t0=window.performance.now();
+
+loadPixels();
+//let d = pixelDensity(); //https://p5js.org/reference/#/p5/pixels
+		
+		for(let y=0, n=0;y<dataSize;y++){
+		for(let x=0;x<dataSize;x++,n+=4) {
+		
+		  if(y==dataSize-1)
+		  {
+			 if(x<dataArr.length)
+			 {
+				let value = dataArr[x];
+				//if(value==0&&pixels[n]==0) continue; //skip unused
+				//if(value!=0&& pixels[n]!=0) continue;
+				//buffer32[n] =  value<<8   //(255   << 24) |value<<8
+				pixels[n] = value;
+				pixels[n + 1] = value;
+				//pixels[n + 2] = 110;
+				pixels[n + 3] = 255;
+			 }
+			}else
+			{
+				let value = dataArr[x];
+				pixels[n] = pixels[n+dataSize*4];
+				pixels[n + 1] = pixels[n+dataSize*4];
+				//pixels[n + 2] = 110;
+				pixels[n + 3] = 255;
+			}
+
+		}
+		}
+	
+
+	dt_avg=window.performance.now()-t0; $('t').innerText=dt_avg;
+	il++;
+	
+	updatePixels();
+
+}
+
+
+function hide_sw(id){
+  x=$('id')
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
+// $('canvas').classList.toggle('hidden')
+}
+
+var showArr='f';
+function show_field(){ showArr='f';
+}
+function show_hist(){ showArr='h';
+}
+function show_visits(){ showArr='v';
+}
+var speed=100;
+function sliderSpeed_change(v){
+	speed=Math.pow(v,3);
+    $tx("sliderSpeed_txt",speed);
+}
+	</script>
+  </head>
+  <body>
+    <main>
+    </main>
+ms <i id='t'></i><br>
+<!-- <button id='stop_sw'  onclick="bStop=!bStop; $tx('stop_sw',bStop?'start':'stop'); if(!bStop)loop();">stop</button>  -->
+<!-- <button id='btn_show_field'  onclick="show_field()">show_field</button>  -->
+<!-- <button id='btn_show_hist'  onclick="show_hist()">show_hist</button>  -->
+<!-- <button id='btn_show_visits'  onclick="show_visits()">show_visits</button> <br> -->
+
+<button id="connectButton" onclick="clickConnect()">Connect</button><span id="statusBar">Disconnected</span><br>
+<input id="sendText"  onclick="clickSend()" type="text" /><input id="sendButton" type="button" value="send" /><br>
+<textarea readonly id="receiveText" ></textarea>
+
+<!-- <label for="baudrate">Baud rate:</label> <select id="baudrate"> <option value="9600">9600</option> <option value="14400">14400</option> <option value="19200">19220</option> <option value="28800">28800</option> <option value="38400">38400</option> <option value="57600">57600</option> <option value="115200" selected="selected">115200</option> <option value="230400">230400</option> <option value="460800">460800</option> <option value="921600">921600</option> <option value="custom">Custom</option> </select> <br> -->
+<!-- <input id='sliderSpeed' type="range" min="1" max="100" value="10" oninput="sliderSpeed_change(this.value)"> <i id='sliderSpeed_txt'>speed</i><br> -->
+
+<script>
+document.body.onkeyup = function(e){
+if(e.keyCode == 32){$('stop_sw').click()}
+else{
+ $('btn_show_field').click()
+}
+}
+document.body.onkeydown  = function(e){
+if(e.key == 'h'){$('btn_show_hist').click()} //ctrl //codes https://stackoverflow.com/questions/3781142/jquery-or-javascript-how-determine-if-shift-key-being-pressed-while-clicking-an
+else
+if(e.key == 'v'){$('btn_show_visits').click()} //shift
+else
+showArr='f';
+}
+</script>
+<script>
+let sendText = document.getElementById("sendText");
+let sendButton = document.getElementById("sendButton");
+let receiveText = document.getElementById("receiveText");
+let connectButton = document.getElementById("connectButton");
+let statusBar = document.getElementById("statusBar");
+
+//When the connectButton is pressed
+async function clickConnect() {
+    if (port) {
+        //if already connected, disconnect
+        disconnect();
+
+    } else {
+        //otherwise connect
+        await connect();
+    }
+}
+
+
+//Define outputstream, inputstream and port so they can be used throughout the sketch
+var outputStream, inputStream, port;
+navigator.serial.addEventListener('connect', e => {
+    statusBar.innerText = `Connected to ${e.port}`;
+    connectButton.innerText = "Disconnect"
+  });
+  
+  navigator.serial.addEventListener('disconnect', e => {
+    statusBar.innerText = `Disconnected`;
+    connectButton.innerText = "Connect"
+  });
+//Connect to the Arduino
+//var format='TSV';
+var format='bin0_254';
+
+async function connect() {
+
+    //Optional filter to only see relevant boards
+	/*
+    const filter = {
+        usbVendorId: 0x2341 // Arduino SA
+    };
+	*/
+
+    //Try to connect to the Serial port
+    try {
+        port = await navigator.serial.requestPort({ filters: [] });
+        // Continue connecting to |port|.
+
+        // - Wait for the port to open.
+        await port.open({ baudRate: 1000000 }); //115200 9600
+
+        statusBar.innerText = "Connected";
+        connectButton.innerText = "Disconnect"
+		switch(format)
+		{
+			case 'TSV':
+				{
+				let decoder = new TextDecoderStream();
+				inputDone = port.readable.pipeTo(decoder.writable);
+				inputStream = decoder.readable;
+				reader = inputStream.getReader(); 
+				}
+			break;
+			case 'bin0_254':
+				reader = port.readable.getReader();
+			break;
+		}
+
+        const encoder = new TextEncoderStream();
+        outputDone = encoder.readable.pipeTo(port.writable);
+        outputStream = encoder.writable;
+
+        
+        readLoop();
+    } catch (e) {
+
+        //If the pipeTo error appears; clarify the problem by giving suggestions.
+        if (e == "TypeError: Cannot read property 'pipeTo' of undefined") {
+            e += "\n Use Google Chrome and enable-experimental-web-platform-features"
+        }
+        connectButton.innerText = "Connect"
+        statusBar.innerText = e;
+    }
+}
+//Write to the Serial port
+async function writeToStream(line) {
+    const writer = outputStream.getWriter();
+    writer.write(line);
+    writer.releaseLock();
+}
+
+//Disconnect from the Serial port
+async function disconnect() {
+
+    if (reader) {
+        await reader.cancel();
+        await inputDone.catch(() => { });
+        reader = null;
+        inputDone = null;
+    }
+    if (outputStream) {
+        await outputStream.getWriter().close();
+        await outputDone;
+        outputStream = null;
+        outputDone = null;
+    }
+    statusBar.innerText = "Disconnected";
+    connectButton.innerText = "Connect"
+    //Close the port.
+    await port.close();
+    port = null;
+}
+
+//When the send button is pressed
+function clickSend() {
+    //send the message
+    writeToStream(sendText.value)
+    //and clear the input field, so it's clear it has been sent
+    sendText.value = "";
+
+}
+
+
+var dataArr=[]
+var dataArr_i=0;
+var dataArr_buffer=[]
+//Read the incoming data
+async function readLoop() {
+var il=0;
+    while (true) {
+        const { value, done } = await reader.read();
+        if (done === true){
+            break;
+        }
+		
+		switch(format)
+		{
+			case 'TSV':
+				var st=receiveText.value+value;
+				while(true)
+				{
+				  
+				  if(st.indexOf('\r')<2) 
+				  {
+					receiveText.value = st;
+					break;
+				  }
+				  
+				  dataArr=st.substr(0, st.indexOf('\r')).split('\t')
+				  
+				  if(dataArr.length>1)
+				  control.append(new Date(), parseInt(dataArr[1]));
+				  
+				  st=st.substr(st.indexOf('\r')).trimStart();
+				  
+				  $('log').innerText=dataArr;
+				}
+				receiveText.value=st;
+			break;
+			case 'bin0_254':
+			//il++;
+			//if(il%10!=0) break;
+			
+			
+				dataArr_buffer=value;
+				//document.getElementById("log").innerHTML +='<br>'
+                //document.getElementById("log").innerHTML += value;
+ 
+				
+				//dataArr_buffer=dataArr_buffer.concat(value);
+				for(var i=0;i<dataArr_buffer.length;i++)
+				{
+					if(dataArr_buffer[i]==255 || dataArr_buffer[i]==47 || dataArr_i>1100) //###TODO 47??
+					{
+					if(dataArr_i<1100)
+					 //receiveText.value=dataArr;
+					 receiveText.value=dataArr_buffer[i];
+					 
+					dataArr_i=0;
+					dataArr_buffer=dataArr_buffer.slice(i);
+                    i=0;
+//document.getElementById("demo").innerHTML += dataArr_buffer;
+ // document.getElementById("demo").innerHTML +='<br>'
+ // document.getElementById("demo").innerHTML += dataArr;
+ 
+
+					continue;
+					}
+					dataArr[dataArr_i]=dataArr_buffer[i];
+					dataArr_i++;
+					
+
+				}
+				
+				
+				//if(value.length<2)
+				
+				
+				//receiveText.value=dataArr_buffer
+ 
+			break;
+		}
+		
+        //When recieved something add it to the big textarea
+        //receiveText.value += value;
+        //Scroll to the bottom of the text field
+        //receiveText.scrollTop = receiveText.scrollHeight;
+    
+}
+}
+</script>
+
+  <p id='log'></p>
+<!--
+  <div class="legend">
+  <span class="dot control">Real value</span>
+  <span class="dot interpolated">Interpolated</span>
+</div>
+
+<div class="container">
+  <canvas id="graph" height="400"></canvas>
+</div>
+-->
+<script>
+/*
+// Initial value for the position; center of the container
+const angle = Ola(0, 130);
+
+// Double size and scale for better resolution
+const canvasPlot = document.querySelector("#graph");
+canvasPlot.width = window.innerWidth * 2;
+
+const graph = new SmoothieChart({
+  grid: { strokeStyle: '#fff', fillStyle: '#fff' },
+  maxValue: 1023,
+  minValue: 0,
+  // This makes it render a bit worse, but otherwise it's cheating
+  interpolation: 'step'
+});
+graph.streamTo(canvasPlot, 1200);
+
+const control = new TimeSeries();
+const output = new TimeSeries();
+
+// Add to SmoothieChart
+graph.addTimeSeries(control, { strokeStyle: 'rgba(0, 0, 255, 0.3)' });
+graph.addTimeSeries(output, { strokeStyle: 'rgba(255, 0, 0, 0.6)', lineWidth: 2 });
+//control.append(new Date(), 0);
+
+(function tick() {
+  output.append(new Date(), angle.value);
+  requestAnimationFrame(tick);
+})();
+*/
+/*
+// Add a random value to each line every 1-2 seconds
+(function update() {
+  const to = Math.random();
+  angle.value = to;
+  control.append(new Date(), to);
+  setTimeout(update, 1200);
+})();
+*/
+
+</script>
+
+
+  </body>
+</html>
