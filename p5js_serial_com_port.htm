@@ -9,7 +9,7 @@
 	. viewport {position: absolute;}
 	</style>
 	<style>
-	<!-- plot -->
+<!-- plot -->
 body {
   margin: 0;
   padding: 0;
@@ -62,11 +62,11 @@ body {
   overflow: hidden;
 }
 
-canvas {
-  <!-- transform: scale(0.5); -->
+canvas#graph {
+  transform: scale(0.5);
   transform-origin: top left;
 }
-
+<!--                -->
 #dataArr_divs div
 {
   width:40px;
@@ -89,10 +89,7 @@ canvas {
   align-items: stretch;
   justify-content: space-around;
 }
-
-
-
-
+<!--                -->
 .collapsible {
   background-color: #3b3c3cd0; /*dust #5b4c4cf0;  r 310101f0; 	#777; */
   color: white;
@@ -125,18 +122,16 @@ canvas {
   background-color: #f1f1f1; /*#f1f1f1fa;*/
   align-items: stretch;
 }
-	</style>
+<!--                -->
+</style>
 <script>
-//window.location.assign("http://www.mozilla.org");
-
-
-// ✅
 var stt={
  ww:1024,
  hh:512,
  zoomW:1,
  zoomH:1,
- format: 'TSV' //TSV bin0_254
+ format: 'TSV', //TSV bin0_254
+ serSpeed:115200 //1000000
 };
 var stt_default= Object.assign({}, stt); //shallow copy
 
@@ -162,7 +157,8 @@ function settingsFromURL()
 function URL_upd()
 {
  let url_str=new URLSearchParams(stt).toString();//https://stackoverflow.com/questions/6566456/how-to-serialize-an-object-into-a-list-of-url-query-parameters
- history.replaceState({}, null, 'webGL.htm?'+url_str);
+ let ar=window.location.pathname.split('/');
+ history.replaceState(null, null, ar[ar.length-1]+'?'+url_str); //replaceState
 }
 
 settingsFromURL()
@@ -290,6 +286,9 @@ function sliderSpeed_change(v){
 	<a class='btn' href="?format=TSV&ww=800&zoomW=20&zoomH=1">TSV 800 x20</a>
 	<a class='btn' href="?format=TSV&ww=16&zoomW=1&zoomH=40">TSV 16 x1</a>
 	<br>
+	<a class='btn' onclick='stt.serSpeed=1000000; URL_upd()'>serSpeed=1000000</a>
+	<a class='btn' onclick='stt.serSpeed=115200; URL_upd()'>serSpeed=115200</a>
+	
     <main></main>
 	<div id="dataArr_divs"></div>
 	
@@ -351,10 +350,7 @@ navigator.serial.addEventListener('connect', e => {
     connectButton.innerText = "Connect"
   });
 
-//var serSpeed=1000000;
-var serSpeed=115200;
-
-async function connect() {
+async function connect() { //TODO upd from 3d line builder
 	/* //Optional filter to only see relevant boards
     const filter = {
         usbVendorId: 0x2341 // Arduino SA
@@ -367,7 +363,7 @@ async function connect() {
         // Continue connecting to |port|.
 
         // - Wait for the port to open.
-        await port.open({ baudRate: serSpeed });
+        await port.open({ baudRate: stt.serSpeed });
 
         statusBar.innerText = "Connected";
         connectButton.innerText = "Disconnect"
@@ -474,6 +470,8 @@ var il=0;
 				  st=st.substr(st.indexOf('\r')).trimStart();
 				  
 				  $('log').innerText=dataArr;
+				    dataPlot.value = dataArr[0]; //dataArr.length>7? dataArr[8]:
+					control.append(new Date(), dataArr[0]);
 				}
 				receiveText_buf=st;
 			break;
@@ -584,7 +582,7 @@ for (let i = 0, coll = document.getElementsByClassName("collapsible"); i < coll.
 <script>
 
 // Initial value for the position; center of the container
-const angle = Ola(0, 130);
+const dataPlot = Ola(0, 930);
 
 // Double size and scale for better resolution
 const canvasPlot = document.querySelector("#graph");
@@ -605,22 +603,22 @@ const output = new TimeSeries();
 // Add to SmoothieChart
 graph.addTimeSeries(control, { strokeStyle: 'rgba(0, 0, 255, 0.3)' });
 graph.addTimeSeries(output, { strokeStyle: 'rgba(255, 0, 0, 0.6)', lineWidth: 2 });
-//control.append(new Date(), 0);
+control.append(new Date(), 0);
 
 (function tick() {
-  output.append(new Date(), angle.value);
+  output.append(new Date(), dataPlot.value);
   requestAnimationFrame(tick);
 })();
 
-
+/*
 // Add a random value to each line every 1-2 seconds
 (function update() {
-  const to = Math.random();
-  angle.value = to;
+  const to = Math.random()*1023;
+  dataPlot.value = to;
   control.append(new Date(), to);
   setTimeout(update, 1200);
 })();
-
+*/
 
 </script>
 
