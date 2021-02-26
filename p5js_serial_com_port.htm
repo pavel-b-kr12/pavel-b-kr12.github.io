@@ -10,10 +10,20 @@
 	</style>
 	<style>
 	<!-- plot -->
-	body {
+body {
   margin: 0;
   padding: 0;
   font-family: Sans-Serif;
+}
+
+.btn:hover {
+    color: #fff!important;
+    background-color: #555!important;
+}
+.btn {
+    color: #000!important;
+    background-color: #fff!important;
+	text-align: center;
 }
 
 .legend {
@@ -57,23 +67,129 @@ canvas {
   transform-origin: top left;
 }
 
+#dataArr_divs div
+{
+  width:40px;
+  color: grey;
+  /*
+  margin: 0 .5em;
+  padding: .5em;*/
+  /* important */
+  min-height: 90%;
+}
+
+#dataArr_divs {
+  /*width: 90%;*/
+  height: 60px;
+  background: black; /*linear-gradient(red,blue);*/
+  padding: 30px;
+  /* important */
+  display: flex;
+  /* important */
+  align-items: stretch;
+  justify-content: space-around;
+}
+
+
+
+
+.collapsible {
+  background-color: #3b3c3cd0; /*dust #5b4c4cf0;  r 310101f0; 	#777; */
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+.active, .collapsible:hover {
+  background-color: #abacacf0;/*400d 	r #500c; 	#aa5f;*/
+  color: black;
+}
+.collapsible:after {
+  content: '\002B';
+  color: white;
+  font-weight: bold;
+  float: right;
+  margin-left: 5px;
+}
+.active:after {
+  content: "\2212";
+}
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1; /*#f1f1f1fa;*/
+  align-items: stretch;
+}
 	</style>
-	<script>
-	dataSize=1024;
-	hh=dataSize;
-	ww=dataSize;
-	xc=dataSize/2;
-	yc=xc;
-	xM=dataSize-1;
-	yM=dataSize-1;
-	</script>
+<script>
+//window.location.assign("http://www.mozilla.org");
+
+
+// ✅
+var stt={
+ ww:1024,
+ hh:512,
+ zoomW:1,
+ zoomH:1,
+ format: 'TSV' //TSV bin0_254
+};
+var stt_default= Object.assign({}, stt); //shallow copy
+
+function paramsToObject_and_Global(URLSear, settings_obj) {//https://stackoverflow.com/questions/8648892/how-to-convert-url-parameters-to-a-javascript-object
+	console.log(URLSear);
+  //let result = {}
+  for(let entry of URLSear) { // each 'entry' is a [key, value] tupple
+    const [key, value] = entry;
+    //result[key] = value;
+	
+	let num=parseFloat(value);
+
+	//settings_obj[key] = isNaN(num)?stt_default[key]:num; //allow only numbers
+	settings_obj[key] = isNaN(num)?value:num; //TODO have to check if values format correct
+	//window[key] = isNaN(num)?value:num; //and upd global var. TODO test if there is speed difference for access
+  }
+  //return result;
+}
+function settingsFromURL()
+{
+ paramsToObject_and_Global(new URLSearchParams(window.location.search), stt);
+}
+function URL_upd()
+{
+ let url_str=new URLSearchParams(stt).toString();//https://stackoverflow.com/questions/6566456/how-to-serialize-an-object-into-a-list-of-url-query-parameters
+ history.replaceState({}, null, 'webGL.htm?'+url_str);
+}
+
+settingsFromURL()
+
+ xc=stt.ww/2;
+ yc=stt.hh/2;
+ xM=stt.ww-1;
+ yM=stt.hh-1;
+</script>
 	
 	<script src="common.js"></script>
 	<script>
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) { //rgbToHex(0, 51, 255) > #0033ff
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
 
 function setup() {
-  createCanvas(dataSize, dataSize);
+  createCanvas(stt.ww, stt.hh);
 }
+
+var dataArr_divs_arr=[];
 
 var dt_avg=10;
 var bStop=false;
@@ -83,43 +199,64 @@ function draw() {
 if(bStop) return;
 	var t0=window.performance.now();
 
-loadPixels();
-//let d = pixelDensity(); //https://p5js.org/reference/#/p5/pixels
-		
-		for(let y=0, n=0;y<dataSize;y++){
-		for(let x=0;x<dataSize;x++,n+=4) {
-		
-		  if(y==dataSize-1)
-		  {
-			 if(x<dataArr.length)
-			 {
-				let value = dataArr[x];
-				//if(value==0&&pixels[n]==0) continue; //skip unused
-				//if(value!=0&& pixels[n]!=0) continue;
-				//buffer32[n] =  value<<8   //(255   << 24) |value<<8
-				pixels[n] = value;
-				pixels[n + 1] = value;
-				//pixels[n + 2] = 110;
-				pixels[n + 3] = 255;
-			 }
-			}else
+	if(dataArr.length<=20)
+	{
+		if(dataArr_divs_arr.length<dataArr.length) //create elements for each data value
+		{
+			for(let i=0;i<dataArr.length-dataArr_divs_arr.length;i++)
 			{
-				let value = dataArr[x];
-				pixels[n] = pixels[n+dataSize*4];
-				pixels[n + 1] = pixels[n+dataSize*4];
-				//pixels[n + 2] = 110;
-				pixels[n + 3] = 255;
+				var el = document.createElement("div");                 // Create a <li> node
+				//var textnode = document.createTextNode(dataArr[]);         // Create a text node
+				//el.appendChild(textnode);                              // Append the text to <li>
+				$("dataArr_divs").appendChild(el);     // Append <li> to <ul> with id="myList"
+
+				dataArr_divs_arr.push(el);
+			}
+		}
+		//console.log(dataArr_divs_arr.length, dataArr.length);
+		for(let i=0;i<dataArr_divs_arr.length;i++)
+		{
+			dataArr_divs_arr[i].style.backgroundColor='rgb(' + dataArr[i] + ',' + dataArr[i] + ',0)'; //rgbToHex(dataArr[i],dataArr[i],0);
+		}
+	}
+	
+	loadPixels();
+	//let d = pixelDensity(); //https://p5js.org/reference/#/p5/pixels
+	for(let y=0, n=0;y<stt.hh;y++){
+	for(let x=0;x<stt.ww;x++,n+=4) {
+	
+	  if(y==stt.hh-1) //draw 1 line
+	  {
+		 if(x<dataArr.length*stt.zoomW) //TODO use zoomH
+		 {
+			let value = dataArr[Math.floor(x/stt.zoomW)];
+			//if(value==0&&pixels[n]==0) continue; //skip unused
+			//if(value!=0&& pixels[n]!=0) continue;
+			//buffer32[n] =  value<<8   //(255   << 24) |value<<8
+			//for(let wi=0;wi<stt.zoomW;wi++)
+			{
+				pixels[n] = value;
+				pixels[(n + 1)] = value>=254?value/2:value; //red for 255
+				pixels[n + 2] = value>=254?0:1//110;
+				pixels[(n + 3)] = 255;
 			}
 
+		 }
+		}else //shift pixels of other lines
+		{
+			let value = dataArr[x];
+			pixels[n] = pixels[n+stt.ww*4];
+			pixels[n + 1] = pixels[n+1+stt.ww*4];
+			pixels[n + 2] = pixels[n+2+stt.ww*4];//110;
+			pixels[n + 3] = 255;
 		}
-		}
-	
 
-	dt_avg=window.performance.now()-t0; $('t').innerText=dt_avg;
-	il++;
-	
+	}
+	}
 	updatePixels();
-
+	
+	dt_avg=dt_avg*0.96+(window.performance.now()-t0)*0.04; $('t').innerText=dt_avg.toFixed(2);
+	il++;
 }
 
 
@@ -148,8 +285,15 @@ function sliderSpeed_change(v){
 	</script>
   </head>
   <body>
-    <main>
-    </main>
+  	<a class='btn' href="?format=bin0_254&hh=1024&ww=1024&zoomW=1&zoomH=1">BIN 1024 x1 for linear camera array Toshiba TCD1201D</a><br>
+	<a class='btn' href="?format=TSV&ww=1024&zoomW=40&zoomH=1">TSV 1024 x40</a>
+	<a class='btn' href="?format=TSV&ww=800&zoomW=20&zoomH=1">TSV 800 x20</a>
+	<a class='btn' href="?format=TSV&ww=16&zoomW=1&zoomH=40">TSV 16 x1</a>
+	<br>
+    <main></main>
+	<div id="dataArr_divs"></div>
+	
+
 ms <i id='t'></i><br>
 <!-- <button id='stop_sw'  onclick="bStop=!bStop; $tx('stop_sw',bStop?'start':'stop'); if(!bStop)loop();">stop</button>  -->
 <!-- <button id='btn_show_field'  onclick="show_field()">show_field</button>  -->
@@ -158,7 +302,7 @@ ms <i id='t'></i><br>
 
 <button id="connectButton" onclick="clickConnect()">Connect</button><span id="statusBar">Disconnected</span><br>
 <input id="sendText"  onclick="clickSend()" type="text" /><input id="sendButton" type="button" value="send" /><br>
-<textarea readonly id="receiveText" ></textarea>
+<textarea readonly id="receiveText"  style="display:none"></textarea>
 
 <!-- <label for="baudrate">Baud rate:</label> <select id="baudrate"> <option value="9600">9600</option> <option value="14400">14400</option> <option value="19200">19220</option> <option value="28800">28800</option> <option value="38400">38400</option> <option value="57600">57600</option> <option value="115200" selected="selected">115200</option> <option value="230400">230400</option> <option value="460800">460800</option> <option value="921600">921600</option> <option value="custom">Custom</option> </select> <br> -->
 <!-- <input id='sliderSpeed' type="range" min="1" max="100" value="10" oninput="sliderSpeed_change(this.value)"> <i id='sliderSpeed_txt'>speed</i><br> -->
@@ -167,7 +311,7 @@ ms <i id='t'></i><br>
 document.body.onkeyup = function(e){
 if(e.keyCode == 32){$('stop_sw').click()}
 else{
- $('btn_show_field').click()
+ //$('btn_show_field').click()
 }
 }
 document.body.onkeydown  = function(e){
@@ -187,12 +331,9 @@ let statusBar = document.getElementById("statusBar");
 
 //When the connectButton is pressed
 async function clickConnect() {
-    if (port) {
-        //if already connected, disconnect
+    if (port) {   //if already connected, disconnect
         disconnect();
-
-    } else {
-        //otherwise connect
+    } else {      //otherwise connect
         await connect();
     }
 }
@@ -209,14 +350,12 @@ navigator.serial.addEventListener('connect', e => {
     statusBar.innerText = `Disconnected`;
     connectButton.innerText = "Connect"
   });
-//Connect to the Arduino
-//var format='TSV';
-var format='bin0_254';
+
+//var serSpeed=1000000;
+var serSpeed=115200;
 
 async function connect() {
-
-    //Optional filter to only see relevant boards
-	/*
+	/* //Optional filter to only see relevant boards
     const filter = {
         usbVendorId: 0x2341 // Arduino SA
     };
@@ -228,11 +367,11 @@ async function connect() {
         // Continue connecting to |port|.
 
         // - Wait for the port to open.
-        await port.open({ baudRate: 1000000 }); //115200 9600
+        await port.open({ baudRate: serSpeed });
 
         statusBar.innerText = "Connected";
         connectButton.innerText = "Disconnect"
-		switch(format)
+		switch(stt.format)
 		{
 			case 'TSV':
 				{
@@ -251,13 +390,12 @@ async function connect() {
         outputDone = encoder.readable.pipeTo(port.writable);
         outputStream = encoder.writable;
 
-        
         readLoop();
     } catch (e) {
 
         //If the pipeTo error appears; clarify the problem by giving suggestions.
         if (e == "TypeError: Cannot read property 'pipeTo' of undefined") {
-            e += "\n Use Google Chrome and enable-experimental-web-platform-features"
+            e += "\n Enable in Chromium: <a href='chrome://flags/#enable-experimental-web-platform-features'>chrome://flags/#enable-experimental-web-platform-features</a> "
         }
         connectButton.innerText = "Connect"
         statusBar.innerText = e;
@@ -275,6 +413,7 @@ async function disconnect() {
 
     if (reader) {
         await reader.cancel();
+		if(inputDone!=null)
         await inputDone.catch(() => { });
         reader = null;
         inputDone = null;
@@ -298,7 +437,6 @@ function clickSend() {
     writeToStream(sendText.value)
     //and clear the input field, so it's clear it has been sent
     sendText.value = "";
-
 }
 
 
@@ -306,6 +444,7 @@ var dataArr=[]
 var dataArr_i=0;
 var dataArr_buffer=[]
 //Read the incoming data
+var receiveText_buf='';
 async function readLoop() {
 var il=0;
     while (true) {
@@ -314,29 +453,29 @@ var il=0;
             break;
         }
 		
-		switch(format)
+		switch(stt.format)
 		{
 			case 'TSV':
-				var st=receiveText.value+value;
+				var st=receiveText_buf+value;
 				while(true)
 				{
 				  
 				  if(st.indexOf('\r')<2) 
 				  {
-					receiveText.value = st;
+					receiveText_buf = st;
 					break;
 				  }
 				  
 				  dataArr=st.substr(0, st.indexOf('\r')).split('\t')
 				  
-				  if(dataArr.length>1)
-				  control.append(new Date(), parseInt(dataArr[1]));
+				  //if(dataArr.length>1)
+				  //control.append(new Date(), parseInt(dataArr[1]));
 				  
 				  st=st.substr(st.indexOf('\r')).trimStart();
 				  
 				  $('log').innerText=dataArr;
 				}
-				receiveText.value=st;
+				receiveText_buf=st;
 			break;
 			case 'bin0_254':
 			//il++;
@@ -355,7 +494,7 @@ var il=0;
 					{
 					if(dataArr_i<1100)
 					 //receiveText.value=dataArr;
-					 receiveText.value=dataArr_buffer[i];
+					 //receiveText.value=dataArr_buffer[i];
 					 
 					dataArr_i=0;
 					dataArr_buffer=dataArr_buffer.slice(i);
@@ -391,8 +530,40 @@ var il=0;
 }
 </script>
 
-  <p id='log'></p>
-<!--
+<p id='log'></p>
+<button type="button" class="collapsible">arduino sketch TSV format: <b>value \t value \t ....... \r</b></button>
+<div class="content">
+<pre>
+#define ttab Serial.print("\t");
+void setup(){Serial.begin(115200);}
+uint16_t il=0;
+void loop(){
+	Serial.print(il); ttab
+	Serial.print(millis()/1000); ttab
+	for(byte p=A0;p<=A7;p++) {Serial.print(analogRead(p)); ttab}
+	Serial.println();
+	il++; delay(10);
+}
+</pre>
+</div>
+<button type="button" class="collapsible">arduino sketch BIN format: <b>value value value ....... 255</b> so each value is byte 0...254</button>
+<div class="content">
+<pre>
+void setup(){Serial.begin(115200);}
+uint16_t il=0;
+void loop(){
+	Serial.write((byte)il);
+	for(byte p=A0,v;p<=A7;p++){
+		v=analogRead(p)/4;
+		if(v==255) v--;
+		Serial.write(v);
+	}
+	Serial.write(255);
+	il++; delay(5);
+}
+</pre>
+</div>
+
   <div class="legend">
   <span class="dot control">Real value</span>
   <span class="dot interpolated">Interpolated</span>
@@ -401,9 +572,17 @@ var il=0;
 <div class="container">
   <canvas id="graph" height="400"></canvas>
 </div>
--->
 <script>
-/*
+for (let i = 0, coll = document.getElementsByClassName("collapsible"); i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    content.style.display = (content.style.display === "block") ? "none":"block";
+  });
+}
+</script>
+<script>
+
 // Initial value for the position; center of the container
 const angle = Ola(0, 130);
 
@@ -432,8 +611,8 @@ graph.addTimeSeries(output, { strokeStyle: 'rgba(255, 0, 0, 0.6)', lineWidth: 2 
   output.append(new Date(), angle.value);
   requestAnimationFrame(tick);
 })();
-*/
-/*
+
+
 // Add a random value to each line every 1-2 seconds
 (function update() {
   const to = Math.random();
@@ -441,7 +620,7 @@ graph.addTimeSeries(output, { strokeStyle: 'rgba(255, 0, 0, 0.6)', lineWidth: 2 
   control.append(new Date(), to);
   setTimeout(update, 1200);
 })();
-*/
+
 
 </script>
 
