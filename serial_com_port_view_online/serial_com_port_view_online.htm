@@ -1,9 +1,9 @@
 <html>
   <head>
   <meta charset="utf-8">
-    <script type="text/javascript" src="lib/ola.min.js"></script>
-    <script type="text/javascript" src="lib/smoothie.js"></script>
-    <script src="lib/p5.min.js"></script>
+    <script type="text/javascript" src="ola.min.js"></script>
+    <script type="text/javascript" src="smoothie.js"></script>
+    <script src="p5.min.js"></script>
 	<script src="common.js"></script>
 	<script src="save.js"></script>
 	<style>
@@ -475,6 +475,7 @@ var il=0;
 		switch(stt.format)
 		{
 			case 'TSV':
+			{
 				var st=receiveText_buf+value;
 				while(true)
 				{
@@ -492,9 +493,24 @@ var il=0;
 				  {
 					dataArr[i]=parseInt(dataArr[i]);
 				  }
+				  
+				//---------- save new values  TODO avg, delta change to cancel light noise for better skip same
+				let bDataChanges=false;
+				if(dataHist_i==0) bDataChanges=true;
+				else
+				{
+				  for(let i=2;i<dataArr.length;i++)
+					if(dataHist[dataHist_i-1][i]!=dataArr[i]) bDataChanges=true;
+				}
+				if(bDataChanges)
+				{
 				  dataHist[dataHist_i]=dataArr;
 				  dataHist_i++;
-				  
+				}
+				else dataHist[dataHist_i-1]=dataArr; //if same - only update time of last value 
+
+						
+				  //----------
 					if(!bStop && dataArr.length>4)
 					{
 						output.append(new Date(), dataPlot.value);
@@ -529,6 +545,7 @@ var il=0;
 					}
 				}
 				receiveText_buf=st;
+			}
 			break;
 			case 'bin0_254':
 			//il++;
