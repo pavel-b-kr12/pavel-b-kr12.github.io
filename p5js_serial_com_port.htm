@@ -131,7 +131,8 @@ var stt={
  zoomW:1,
  zoomH:1,
  format: 'TSV', //TSV bin0_254
- serSpeed:115200 //1000000
+ //serSpeed:115200
+ serSpeed:1000000
 };
 var stt_default= Object.assign({}, stt); //shallow copy
 
@@ -188,6 +189,8 @@ function setup() {
 var dataArr_divs_arr=[];
 
 var dt_avg=10;
+var dt_packet_avg=20;
+var packet_t_last=0;
 var bStop=false;
 var il=0;
 function draw() {
@@ -293,7 +296,7 @@ function sliderSpeed_change(v){
 	<div id="dataArr_divs"></div>
 	
 
-ms <i id='t'></i><br>
+draw: <i id='t'></i>ms; packet_dt: <i id='packet_dt'></i>ms; packet loss: <i id='iloss'></i><br>
 <!-- <button id='stop_sw'  onclick="bStop=!bStop; $tx('stop_sw',bStop?'start':'stop'); if(!bStop)loop();">stop</button>  -->
 <!-- <button id='btn_show_field'  onclick="show_field()">show_field</button>  -->
 <!-- <button id='btn_show_hist'  onclick="show_hist()">show_hist</button>  -->
@@ -441,6 +444,9 @@ var dataArr_i=0;
 var dataArr_buffer=[]
 //Read the incoming data
 var receiveText_buf='';
+var packet_il_last=-1;
+var packet_iloss_E=0;
+var upd_display_next_t=0;
 async function readLoop() {
 var il=0;
     while (true) {
@@ -469,9 +475,31 @@ var il=0;
 				  
 				  st=st.substr(st.indexOf('\r')).trimStart();
 				  
-				  $('log').innerText=dataArr;
-				    dataPlot.value = dataArr[0]; //dataArr.length>7? dataArr[8]:
-					control.append(new Date(), dataArr[0]);
+					output.append(new Date(), dataPlot.value);
+				    dataPlot.value = dataArr[4]; //dataArr.length>7? dataArr[8]:
+					control.append(new Date(), dataArr[4]);
+					
+					let packet_il=parseInt(dataArr[0]);
+					let packet_t=parseInt(dataArr[1]);
+					if(packet_il_last!=packet_il-1)
+					{
+						packet_iloss_E++;
+					}
+					dt_packet_avg=dt_packet_avg*0.9+(packet_t-packet_t_last)*0.1;
+					if(isNaN(dt_packet_avg)) dt_packet_avg=0;
+					
+					
+					packet_t_last=packet_t;
+					if(packet_iloss_E>1000) packet_iloss_E=0;
+					packet_il_last=packet_il;
+					
+					if(millis()>upd_display_next_t)
+					{
+						upd_display_next_t=millis()+50;
+					  $('log').innerText=dataArr;
+					  $('iloss').innerText=packet_iloss_E;
+					  $('packet_dt').innerText=dt_packet_avg.toFixed(2);
+					}
 				}
 				receiveText_buf=st;
 			break;
@@ -605,11 +633,12 @@ graph.addTimeSeries(control, { strokeStyle: 'rgba(0, 0, 255, 0.3)' });
 graph.addTimeSeries(output, { strokeStyle: 'rgba(255, 0, 0, 0.6)', lineWidth: 2 });
 control.append(new Date(), 0);
 
+/*
 (function tick() {
   output.append(new Date(), dataPlot.value);
   requestAnimationFrame(tick);
 })();
-
+*/
 /*
 // Add a random value to each line every 1-2 seconds
 (function update() {
