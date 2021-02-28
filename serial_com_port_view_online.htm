@@ -4,6 +4,8 @@
     <script type="text/javascript" src="lib/ola.min.js"></script>
     <script type="text/javascript" src="lib/smoothie.js"></script>
     <script src="lib/p5.min.js"></script>
+	<script src="common.js"></script>
+	<script src="save.js"></script>
 	<style>
 	.pa {color: red;}
 	. viewport {position: absolute;}
@@ -25,6 +27,10 @@ body {
     background-color: #fff!important;
 	text-align: center;
 }
+.R{			background-color: #eaa;}
+.R:hover{	background-color: #f99;}
+.B{			background-color: #bbe;}
+.B:hover{	background-color: #99f;}
 
 .legend {
   margin: 10px;
@@ -128,11 +134,13 @@ canvas#graph {
 var stt={
  ww:1024,
  hh:512,
- zoomW:1,
+ zoomW:40,
  zoomH:1,
  format: 'TSV', //TSV bin0_254
- //serSpeed:115200
- serSpeed:1000000
+ //serSpeed:115200,
+ serSpeed:1000000,
+ data_val_pixel_DIV:4,
+ 
 };
 var stt_default= Object.assign({}, stt); //shallow copy
 
@@ -170,7 +178,7 @@ settingsFromURL()
  yM=stt.hh-1;
 </script>
 	
-	<script src="common.js"></script>
+	
 	<script>
 function componentToHex(c) {
   var hex = c.toString(16);
@@ -215,7 +223,7 @@ if(bStop) return;
 		//console.log(dataArr_divs_arr.length, dataArr.length);
 		for(let i=0;i<dataArr_divs_arr.length;i++)
 		{
-			dataArr_divs_arr[i].style.backgroundColor='rgb(' + dataArr[i] + ',' + dataArr[i] + ',0)'; //rgbToHex(dataArr[i],dataArr[i],0);
+			dataArr_divs_arr[i].style.backgroundColor='rgb(' + dataArr[i]/stt.data_val_pixel_DIV + ',' + dataArr[i]/stt.data_val_pixel_DIV + ',0)'; //rgbToHex(dataArr[i],dataArr[i],0);
 		}
 	}
 	
@@ -228,7 +236,7 @@ if(bStop) return;
 	  {
 		 if(x<dataArr.length*stt.zoomW) //TODO use zoomH
 		 {
-			let value = dataArr[Math.floor(x/stt.zoomW)];
+			let value = dataArr[Math.floor(x/stt.zoomW)]/stt.data_val_pixel_DIV;
 			//if(value==0&&pixels[n]==0) continue; //skip unused
 			//if(value!=0&& pixels[n]!=0) continue;
 			//buffer32[n] =  value<<8   //(255   << 24) |value<<8
@@ -243,7 +251,7 @@ if(bStop) return;
 		 }
 		}else //shift pixels of other lines
 		{
-			let value = dataArr[x];
+			let value = dataArr[x]/stt.data_val_pixel_DIV;
 			pixels[n] = pixels[n+stt.ww*4];
 			pixels[n + 1] = pixels[n+1+stt.ww*4];
 			pixels[n + 2] = pixels[n+2+stt.ww*4];//110;
@@ -281,6 +289,11 @@ function sliderSpeed_change(v){
 	speed=Math.pow(v,3);
     $tx("sliderSpeed_txt",speed);
 }
+
+function dataHist_save()
+{
+	downloadTSV(TSV_arr, dataHist, 'dataHist_save_lnk');
+}
 	</script>
   </head>
   <body>
@@ -291,20 +304,21 @@ function sliderSpeed_change(v){
 	<br>
 	<a class='btn' onclick='stt.serSpeed=1000000; URL_upd()'>serSpeed=1000000</a>
 	<a class='btn' onclick='stt.serSpeed=115200; URL_upd()'>serSpeed=115200</a>
-	
+	Bookmark to save settings. CPU usage is high because of draw plot of pixels, press 
+	<button id='stop_sw'  onclick="bStop=!bStop; $tx('stop_sw',bStop?'start draw':'pause draw'); if(bStop)graph.stop(); else{graph.start();loop();}">pause draw</button> 
+	to continue collect data without plot.
     <main></main>
 	<div id="dataArr_divs"></div>
-	
 
 draw: <i id='t'></i>ms; packet_dt: <i id='packet_dt'></i>ms; packet loss: <i id='iloss'></i><br>
-<!-- <button id='stop_sw'  onclick="bStop=!bStop; $tx('stop_sw',bStop?'start':'stop'); if(!bStop)loop();">stop</button>  -->
 <!-- <button id='btn_show_field'  onclick="show_field()">show_field</button>  -->
 <!-- <button id='btn_show_hist'  onclick="show_hist()">show_hist</button>  -->
 <!-- <button id='btn_show_visits'  onclick="show_visits()">show_visits</button> <br> -->
 
-<button id="connectButton" onclick="clickConnect()">Connect</button><span id="statusBar">Disconnected</span><br>
+<button id="btn_connect" onclick="clickConnect()" class='R'>Connect</button> <span id="statusBar">Disconnected</span><br>
 <input id="sendText"  onclick="clickSend()" type="text" /><input id="sendButton" type="button" value="send" /><br>
 <textarea readonly id="receiveText"  style="display:none"></textarea>
+<button onclick="dataHist_save()" class='B'>dataHist_save to file</button><a id='dataHist_save_lnk'></a>
 
 <!-- <label for="baudrate">Baud rate:</label> <select id="baudrate"> <option value="9600">9600</option> <option value="14400">14400</option> <option value="19200">19220</option> <option value="28800">28800</option> <option value="38400">38400</option> <option value="57600">57600</option> <option value="115200" selected="selected">115200</option> <option value="230400">230400</option> <option value="460800">460800</option> <option value="921600">921600</option> <option value="custom">Custom</option> </select> <br> -->
 <!-- <input id='sliderSpeed' type="range" min="1" max="100" value="10" oninput="sliderSpeed_change(this.value)"> <i id='sliderSpeed_txt'>speed</i><br> -->
@@ -328,10 +342,10 @@ showArr='f';
 let sendText = document.getElementById("sendText");
 let sendButton = document.getElementById("sendButton");
 let receiveText = document.getElementById("receiveText");
-let connectButton = document.getElementById("connectButton");
+let btn_connect = document.getElementById("btn_connect");
 let statusBar = document.getElementById("statusBar");
 
-//When the connectButton is pressed
+//When the btn_connect is pressed
 async function clickConnect() {
     if (port) {   //if already connected, disconnect
         disconnect();
@@ -345,12 +359,12 @@ async function clickConnect() {
 var outputStream, inputStream, port;
 navigator.serial.addEventListener('connect', e => {
     statusBar.innerText = `Connected to ${e.port}`;
-    connectButton.innerText = "Disconnect"
+    btn_connect.innerText = "Disconnect"
   });
   
   navigator.serial.addEventListener('disconnect', e => {
     statusBar.innerText = `Disconnected`;
-    connectButton.innerText = "Connect"
+    btn_connect.innerText = "Connect"
   });
 
 async function connect() { //TODO upd from 3d line builder
@@ -369,7 +383,7 @@ async function connect() { //TODO upd from 3d line builder
         await port.open({ baudRate: stt.serSpeed });
 
         statusBar.innerText = "Connected";
-        connectButton.innerText = "Disconnect"
+        btn_connect.innerText = "Disconnect"
 		switch(stt.format)
 		{
 			case 'TSV':
@@ -396,7 +410,7 @@ async function connect() { //TODO upd from 3d line builder
         if (e == "TypeError: Cannot read property 'pipeTo' of undefined") {
             e += "\n Enable in Chromium: <a href='chrome://flags/#enable-experimental-web-platform-features'>chrome://flags/#enable-experimental-web-platform-features</a> "
         }
-        connectButton.innerText = "Connect"
+        btn_connect.innerText = "Connect"
         statusBar.innerText = e;
     }
 }
@@ -424,7 +438,7 @@ async function disconnect() {
         outputDone = null;
     }
     statusBar.innerText = "Disconnected";
-    connectButton.innerText = "Connect"
+    btn_connect.innerText = "Connect"
     //Close the port.
     await port.close();
     port = null;
@@ -439,9 +453,12 @@ function clickSend() {
 }
 
 
-var dataArr=[]
+var dataArr=[];
 var dataArr_i=0;
-var dataArr_buffer=[]
+var dataArr_buffer=[];
+var dataHist=[]; //of each dataArr
+var dataHist_i=0;
+
 //Read the incoming data
 var receiveText_buf='';
 var packet_il_last=-1;
@@ -468,25 +485,35 @@ var il=0;
 					break;
 				  }
 				  
-				  dataArr=st.substr(0, st.indexOf('\r')).split('\t')
-				  
-				  //if(dataArr.length>1)
-				  //control.append(new Date(), parseInt(dataArr[1]));
-				  
+				  dataArr=st.substr(0, st.indexOf('\r')).trim().split('\t')
 				  st=st.substr(st.indexOf('\r')).trimStart();
+				  //------------
+				  for(let i=0;i<dataArr.length;i++)
+				  {
+					dataArr[i]=parseInt(dataArr[i]);
+				  }
+				  dataHist[dataHist_i]=dataArr;
+				  dataHist_i++;
 				  
-					output.append(new Date(), dataPlot.value);
-				    dataPlot.value = dataArr[4]; //dataArr.length>7? dataArr[8]:
-					control.append(new Date(), dataArr[4]);
-					
-					let packet_il=parseInt(dataArr[0]);
-					let packet_t=parseInt(dataArr[1]);
-					if(packet_il_last!=packet_il-1)
+					if(!bStop && dataArr.length>4)
 					{
-						packet_iloss_E++;
+						output.append(new Date(), dataPlot.value);
+						dataPlot.value = dataArr[4]; //dataArr.length>7? dataArr[8]:
+						control.append(new Date(), dataArr[4]);
 					}
-					dt_packet_avg=dt_packet_avg*0.9+(packet_t-packet_t_last)*0.1;
-					if(isNaN(dt_packet_avg)) dt_packet_avg=0;
+					
+					
+					let packet_il=dataArr[0];
+					let packet_t=dataArr[1];
+					if(packet_il>0&&packet_il_last!=packet_il-1)
+					{
+						packet_iloss_E++; console.log('packet_il_last,packet_il ',packet_il_last,packet_il);
+					}
+					else
+					{
+						dt_packet_avg=dt_packet_avg*0.9+(packet_t-packet_t_last)*0.1;
+						if(isNaN(dt_packet_avg)) dt_packet_avg=0;
+					}
 					
 					
 					packet_t_last=packet_t;
