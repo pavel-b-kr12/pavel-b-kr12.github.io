@@ -31,6 +31,11 @@ body {
 .R:hover{	background-color: #f99;}
 .B{			background-color: #bbe;}
 .B:hover{	background-color: #99f;}
+.OrGr{	background-color: #757560!important;}
+.active, .OrGr:hover {
+  background-color: #abacacf0!important;/*400d 	r #500c; 	#aa5f;*/
+  color: black;
+}
 
 .legend {
   margin: 10px;
@@ -615,6 +620,58 @@ void loop(){
 	il++; delay(10);
 }
 </pre>
+<button type="button" class="collapsible OrGr">Soil moisture: test 3 different sensors</button>
+<div class="content">
+C:\_wr\_Arduino\__test\ReadAnalogVoltageAll_TSV_soil_moisure\ReadAnalogVoltageAll_TSV_soil_moisure.ino
+<pre>
+#define EN_sensors_pow_p	9 //power only while reading
+
+#define d0m	1023	//3v3 870R	//600	between arms	
+#define d1m	0		//			//41	between arms	
+#define d2m	697		//cap		//350	between arms	
+/*
+#define d0m	720	723
+#define d1m	199	0
+#define d2m	490	480
+*/
+
+#define ttab Serial.print("\t");
+void setup(){
+	pinMode(EN_sensors_pow_p, OUTPUT);
+	digitalWrite(EN_sensors_pow_p,1); //usig FET. If connected directly to sensor - need to use pinMode OUTPUT→on/INPUT→off
+	analogReference(EXTERNAL);//EXTERNAL  https://www.arduino.cc/reference/en/language/functions/analog-io/analogreference/
+	//external voltage on AREF you have to be careful to never upload the wrong sketch (ie one which calls analogRead() before analogReference()
+	//This will prevent you from shorting the active internal reference voltage and the AREF pin
+	//Serial.begin(115200);
+	Serial.begin(1000000);
+	}
+uint16_t il=0;
+void loop(){
+	//pinMode(EN_sensors_pow_p, OUTPUT);
+	////digitalWrite(EN_sensors_pow_p,1);
+	
+	Serial.print(il); ttab
+	//Serial.print(millis()/1000.,2); ttab //float
+	Serial.print(millis()); ttab
+	
+	for(byte p=A0;p<=A2;p++) {Serial.print((analogRead(p)+analogRead(p)+analogRead(p)+analogRead(p))/4); ttab} //avg
+	//for(byte p=A0;p<=A2;p++) {Serial.print(analogRead(p)); ttab}
+	
+	//for(byte p=0;p<=13;p++) {Serial.print(digitalRead(p));}
+	uint16_t binD=0;
+	for(byte p=2;p<=13;p++) {if(digitalRead(p)) binD|=1<<p;} //digital bits in single uint16_t, cant opt because of ESP8266
+	
+	//Serial.print(binD,BIN); ttab
+	Serial.print(binD); ttab
+	Serial.println();
+	////digitalWrite(EN_sensors_pow_p,0); 
+	//pinMode(EN_sensors_pow_p, INPUT); //off sensors power . 5v=~14mA?  3.3v=~8mA? 3.3v+150ohm=4.5mA
+	il++;
+	if(millis()>600000) delay(1000); //TODO if data is the same skip send of previous but keep last time
+	//else delay(10);
+}
+</pre>
+</div>
 </div>
 <button type="button" class="collapsible">arduino sketch BIN format: <b>value value value ....... 255</b> so each value is byte 0...254</button>
 <div class="content">
@@ -633,6 +690,7 @@ void loop(){
 }
 </pre>
 </div>
+
 
   <div class="legend">
   <span class="dot control">Real value</span>
