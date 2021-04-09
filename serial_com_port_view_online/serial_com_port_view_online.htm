@@ -63,6 +63,15 @@ body {
 .dot.interpolated::before {
   background: rgba(255, 0, 0, 0.6);
 }
+.dot.oR::before {
+  background: rgba(255, 0, 0, 0.6);
+}
+.dot.oG::before {
+  background: rgba(0, 255, 0, 0.6);
+}
+.dot.oB::before {
+  background: rgba(0, 0, 255, 0.6);
+}
 
 .container {
   position: relative;
@@ -136,6 +145,8 @@ canvas#graph {
 <!--                -->
 </style>
 <script>
+const bPlotSmooth=false;
+
 var stt={
  ww:1024,
  hh:512,
@@ -514,13 +525,19 @@ var il=0;
 				}
 				else dataHist[dataHist_i-1]=dataArr; //if same - only update time of last value 
 
-						
+					
 				  //----------
-					if(!bStop && dataArr.length>4)
+					if(bDataChanges && !bStop && dataArr.length>4)
 					{
-						output.append(new Date(), dataPlot.value);
-						dataPlot.value = dataArr[4]; //dataArr.length>7? dataArr[8]:
-						control.append(new Date(), dataArr[4]);
+						
+						if(bPlotSmooth)
+						{
+							dataPlot.value = map(dataArr[4],0,710,0,1023); //dataArr.length>7? dataArr[8]:
+							dataLine0smooth.append(new Date(), dataPlot.value);
+						}
+						dataLine0.append(new Date(), map(dataArr[2], 500,1023,0,1023)); //B moist
+						dataLine1.append(new Date(), map(1023-dataArr[3], 0, 1023,220,1023)); // G water
+						dataLine2.append(new Date(), map(dataArr[4],300,710,0,1023));//R cap
 					}
 					
 					
@@ -693,8 +710,9 @@ void loop(){
 
 
   <div class="legend">
-  <span class="dot control">Real value</span>
-  <span class="dot interpolated">Interpolated</span>
+  <span class="dot oR">capacitive</span>
+  <span class="dot oG">r water</span>
+  <span class="dot oB">r moisture</span>
 </div>
 
 <div class="container">
@@ -727,17 +745,23 @@ const graph = new SmoothieChart({
 });
 graph.streamTo(canvasPlot, 1200);
 
-const control = new TimeSeries();
-const output = new TimeSeries();
+const dataLine0 = new TimeSeries();
+const dataLine1 = new TimeSeries();
+const dataLine2 = new TimeSeries();
+
+const dataLine0smooth = new TimeSeries();
 
 // Add to SmoothieChart
-graph.addTimeSeries(control, { strokeStyle: 'rgba(0, 0, 255, 0.3)' });
-graph.addTimeSeries(output, { strokeStyle: 'rgba(255, 0, 0, 0.6)', lineWidth: 2 });
-control.append(new Date(), 0);
+graph.addTimeSeries(dataLine0, { strokeStyle: 'rgba(0, 0, 255, 0.7)', lineWidth: 2 });
+graph.addTimeSeries(dataLine1, { strokeStyle: 'rgba(0, 255, 0, 0.7)', lineWidth: 2 });
+graph.addTimeSeries(dataLine2, { strokeStyle: 'rgba(255, 0, 0, 0.7)', lineWidth: 2 });
+if(bPlotSmooth)
+graph.addTimeSeries(dataLine0smooth, { strokeStyle: 'rgba(222, 111, 111, 0.6)', lineWidth: 2 });
+dataLine0.append(new Date(), 0);
 
 /*
 (function tick() {
-  output.append(new Date(), dataPlot.value);
+  dataLine0smooth.append(new Date(), dataPlot.value);
   requestAnimationFrame(tick);
 })();
 */
@@ -746,7 +770,7 @@ control.append(new Date(), 0);
 (function update() {
   const to = Math.random()*1023;
   dataPlot.value = to;
-  control.append(new Date(), to);
+  dataLine0.append(new Date(), to);
   setTimeout(update, 1200);
 })();
 */
