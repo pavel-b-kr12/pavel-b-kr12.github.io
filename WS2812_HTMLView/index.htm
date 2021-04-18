@@ -1,0 +1,649 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <title>MDN Games: Babylon.js demo - shapes</title>
+      <!-- <script src = "https://cdn.babylonjs.com/babylon.js"></script> -->
+      <!-- <script src = "babylon.furMaterial.js"></script> -->
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script> -->
+        <!-- <script src="https://preview.babylonjs.com/ammo.js"></script> -->
+        <!-- <script src="https://preview.babylonjs.com/cannon.js"></script> -->
+        <!-- <script src="https://preview.babylonjs.com/Oimo.js"></script> -->
+        <!-- <script src="https://preview.babylonjs.com/earcut.min.js"></script> -->
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <!-- <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script> -->
+        <!-- <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script> -->
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <!-- <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script> -->
+      <style>
+         html,body,canvas { margin: 0; padding: 0; width: 100%; height: 92%; font-size: 16; }
+		 .Rl{background-color:#FCC}
+		 .Bl{background-color:#CCF}
+		 button {scale:3; margin:44px}
+      </style>
+   </head>
+   
+   <body>
+      <canvas id = "renderCanvas"></canvas>
+      <script type = "text/javascript">
+		function $(s) {return document.getElementById(s);}
+
+		var anim_pos_skew_spd=8;
+		var skew_amplitude0=1;
+		var skew_amplitude=1;
+
+		const instanceCount = 20*60;
+		var instance_i = 0;
+		var box;
+		var instances=[];
+		var instances_pos = new Float32Array(3 * instanceCount);
+		const colorDataE=4 * instanceCount;
+		var colorData = new Float32Array(colorDataE);
+
+		var log_i=0;
+		var ms_setcolorData_=0;
+		var	ms_drawCircles_=0;
+	  
+		var canvas = document.getElementById("renderCanvas");
+		var engine = new BABYLON.Engine(canvas, true);
+		var camera =null;
+		var ribbon =null;
+		var kacti =null;
+//var texs=[];//texs[0].getSize()
+//var obs=[];//obs[0].height*=texs[0].getSize().height/texs[0].getSize().width;
+//obs[0]._scaling.y*=texs[0].getSize().height/texs[0].getSize().width;
+//var bNeedResize=true;
+	//width:s*aspect, height:s
+function addPic(nm, x,y,z,s)
+{
+
+
+	var mat = new BABYLON.StandardMaterial(nm, scene);
+	var tex =new BABYLON.Texture(nm);
+	//texs.push(tex);
+	mat.diffuseTexture = tex;
+
+	//var ob = BABYLON.MeshBuilder.CreatePlane(nm, {size:s, sideOrientation: BABYLON.Mesh.DOUBLESIDE});
+	
+	//var aspect=tex.getSize();
+	//console.log(nm, aspect)
+	var ob = BABYLON.MeshBuilder.CreatePlane(nm, {size:s, sideOrientation: BABYLON.Mesh.DOUBLESIDE});
+	ob.position=new BABYLON.Vector3(x,y,z);
+	ob.material = mat;
+	ob.rotation.y=Math.PI;
+	//obs.push(ob);
+	
+	//scale to image
+	var img = new Image();
+	img.onload = function() {
+	ob._scaling.y*=this.height/this.width;
+	}
+	img.src = nm;
+}
+	
+		var createScene  = function() {
+            var scene = new BABYLON.Scene(engine);
+            //scene.clearColor = new BABYLON.Color3(0, 1, 0);
+    //var camera = new BABYLON.ArcRotateCamera("Camera", 1, 0.8, 10, new BABYLON.Vector3(0, 0, 0), scene);
+	camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 2, 112, new BABYLON.Vector3(30,10,0), scene);
+	camera.position=  new BABYLON.Vector3(-111,44,33);
+	camera.attachControl(canvas, true);
+	scene.activeCamera =camera;
+	
+	cameraUni = new BABYLON.UniversalCamera("CameraUni", new BABYLON.Vector3(0, 1, -15), scene);
+	cameraUni.setTarget(new BABYLON.Vector3(30,10,0));
+	cameraUni.attachControl(canvas, true);
+	
+	/*
+            var light0 = new BABYLON.PointLight("Omni", new BABYLON.Vector3(0, 0, 10), scene);
+            // {diameter: 11, diameterX: 11,Segments:45 }
+            var origin = BABYLON.Mesh.CreateSphere("origin", 1, 2.0, scene);
+*/
+
+	const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
+	/*
+	var light0 = new BABYLON.HemisphericLight("Hemi0", new BABYLON.Vector3(0,1,0), scene);
+	light0.diffuse = new BABYLON.Color3(1, 0.83, 0.6);
+	light0.specular = new BABYLON.Color3(1, 0.8, 0.38);
+	light0.groundColor = new BABYLON.Color3(0, 0, 0);
+	*/
+	var pl = new BABYLON.PointLight("pl", new BABYLON.Vector3(0, 0, 0), scene);
+	pl.diffuse = new BABYLON.Color3(0.98, 1, 0.62);
+	pl.intensity = 0.5;
+	// material
+	var mat = new BABYLON.StandardMaterial("mat1", scene);
+	mat.alpha = 1;
+	mat.diffuseColor = new BABYLON.Color3(0.43, 0.27, 0.06);
+	mat.emissiveColor = new BABYLON.Color3.Black();
+	mat.backFaceCulling = false;
+	// material G
+	var matG = new BABYLON.StandardMaterial("mat1", scene);
+	matG.alpha = 1;
+	matG.diffuseColor = new BABYLON.Color3(0.43, 0.99, 0.22);
+	matG.emissiveColor = new BABYLON.Color3.Black();
+
+
+	var mat_ground = new BABYLON.StandardMaterial("mat_ground", scene);
+	mat_ground.diffuseTexture = new BABYLON.Texture("sand.webp");
+	mat_ground.diffuseTexture.uScale = 16;
+    mat_ground.diffuseTexture.vScale = 16;
+	mat_ground.alpha = 1;
+	mat_ground.diffuseColor = new BABYLON.Color3(0.2, 0.18, 0.18);
+	mat_ground.specularColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+	//mat_ground.emissiveColor = new BABYLON.Color3.Black();
+const ground = BABYLON.Mesh.CreateGround("ground", 2555, 2555, 8, scene);
+ground.position=new BABYLON.Vector3(0, -4, 0);
+ground.material = mat_ground;
+
+	//mat1.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/tile1.jpg");
+	//mat1.diffuseTexture = new BABYLON.Texture("GIMP render CML edge Neon  Map illusion.png");
+
+var matFloor = new BABYLON.StandardMaterial('matFloor', scene);
+	//var texture = new BABYLON.Texture('https://s-media-cache-ak0.pinimg.com/736x/ab/73/9d/ab739d5653829af07f26b9c96efcf191.jpg', scene);
+	matFloor.diffuseTexture = new BABYLON.Texture("GIMP fractal nautilus blur mosaic.webp");
+	matFloor.specularColor = new BABYLON.Color3(0.7, 0.7, 0.7);
+	
+	Floor = BABYLON.MeshBuilder.CreatePlane("Floor", {height:90, width: 180, sideOrientation: BABYLON.Mesh.DOUBLESIDE});
+	Floor.position=new BABYLON.Vector3(70, -2, -25);
+	Floor.material = matFloor;
+	Floor.rotation.x=Math.PI/2;
+	//Floor.rotation.y=Math.PI;
+	
+var matWallW = new BABYLON.StandardMaterial('matWallW', scene);
+matWallW.diffuseTexture = new BABYLON.Texture("wallB.webp");
+matWallW.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+	WallW = BABYLON.MeshBuilder.CreatePlane("WallW", {height:100, width: 200, sideOrientation: BABYLON.Mesh.DOUBLESIDE});
+	WallW.position=new BABYLON.Vector3(60, 33, -70);
+	WallW.material = matWallW;
+	
+	//WallW.rotation.x=Math.PI/2;	
+	
+	addPic("trees001.webp",60, 33, -69.8, 33);
+	addPic("mushroom001.webp",94-66, 44, -69.8, 26);
+	addPic("flower001.webp",90, 18, -69.8, 14);
+	addPic("mount.webp",105, 55, -69.8, 46);
+
+
+	/*
+    const f = new BABYLON.Vector4(0,0, 0.5, 1); // front image = half the whole image along the width 
+	const b = new BABYLON.Vector4(0.5,0, 1, 1); // back image = second half along the width
+	
+    const plane = BABYLON.MeshBuilder.CreatePlane("plane", {frontUVs: f, backUVs: b, sideOrientation: BABYLON.Mesh.DOUBLESIDE});
+    plane.material = mat1;
+	*/
+	
+  
+  //------------pot https://playground.babylonjs.com/#3XMWZ#45
+  	var paths = [];
+	var disp = 8;
+	var radius = 3;
+	var steps = 11;
+	var step = 2 * Math.PI / steps;
+	var circle =[];
+	
+	for(var i = 1; i < 3 * Math.PI /2; i += step) {
+		var x = radius * Math.cos(i) + disp;
+		var y = radius * Math.sin(i)*4.5;
+		var z = 0;
+		circle.push(new BABYLON.Vector3(x, y, z));
+	}
+	
+	var deltaSteps = 20;
+	var delta = 2 * Math.PI / deltaSteps;
+	for(p = 0; p< 7 * Math.PI / 4; p += delta) {
+		var path = [];
+		for( var i = 0; i < circle.length; i++) {
+			var x = circle[i].x * Math.cos(p) + circle[i].z * Math.sin(p);
+			var y = circle[i].y;
+			var z = -circle[i].x * Math.sin(p) + circle[i].z * Math.cos(p);
+			path.push(new BABYLON.Vector3(x, y, z));
+		}
+		paths.push(path);
+	}
+	
+	ribbon = BABYLON.MeshBuilder.CreateRibbon("ribbon", {pathArray: paths, closeArray: true }, scene);
+	ribbon.material = mat;
+	ribbon.position=new BABYLON.Vector3(0, 11, 0);
+   ribbon2 = ribbon.createInstance("ribbon" + 1);
+   ribbon2.position=new BABYLON.Vector3(32, 11, 0);
+   ribbon3 = ribbon.createInstance("ribbon" + 1);
+   ribbon3.position=new BABYLON.Vector3(32*2, 11, -50);
+  //------------kacti
+// Fur Material
+	var furMaterial = new BABYLON.FurMaterial("fur", scene);
+	furMaterial.furLength = 1.5;
+    furMaterial.furAngle = 0;
+    furMaterial.furColor = new BABYLON.Color3(0.66, 1, 0.55);
+    furMaterial.diffuseTexture = new BABYLON.Texture("https://upload.wikimedia.org/wikipedia/commons/c/c3/Cacti_bloom.jpg", scene);
+    furMaterial.furTexture = BABYLON.FurMaterial.GenerateTexture("furTexture", scene);
+
+    furMaterial.furSpacing = 6;
+    furMaterial.furDensity = 11;//1 10
+    furMaterial.furSpeed = 2222;
+    //furMaterial.furGravity = new BABYLON.Vector3(0, -1, 0);
+	
+	   
+	
+  kacti = new BABYLON.MeshBuilder.CreateCapsule("capsule", {height:16, radius:0.5}, scene)
+  kacti.position=new BABYLON.Vector3(0, 13, 0);
+  //kacti.material = matG;
+  kacti.material = furMaterial;
+	// Furify the sphere to create the high level fur effect
+	// The first argument is sphere itself. The second represents
+	// the quality of the effect
+	var quality = 17;
+	var shells = BABYLON.FurMaterial.FurifyMesh(kacti, quality);
+
+
+    //var box1 = BABYLON.BoxBuilder.CreateBox("root", {size: 2});
+    box = BABYLON.Mesh.CreateSphere("origin", 8, 1.0, scene);
+    box.alwaysSelectAsActiveMesh = true;
+    
+    setcolorData();
+
+    box.material = new BABYLON.StandardMaterial("material");
+    box.material.disableLighting = true;
+    box.material.emissiveColor = BABYLON.Color3.White();
+
+	window.addEventListener("resize", function () {  engine.resize(); });
+	return scene;
+};
+var scene = createScene();
+//=================================================
+engine.runRenderLoop(function() {
+		 let t0=performance.now();
+		 
+	//for (instance_i = 0; instance_i < instanceCount - 1; instance_i++) {
+	if(instance_i < instanceCount)
+	{ //add meshes
+		for(let i=0;i<9;i++)
+		{
+			instance_i++;
+			let instance = box.createInstance("box" + instance_i);
+			instance.position.x = 222 - Math.random() * 440;
+			instance.position.y = 110 - Math.random() * 110;
+			instance.position.z = 222 - Math.random() * 440;
+
+			instance.alwaysSelectAsActiveMesh = true;
+			instances.push(instance);
+		}
+    }
+	else if(instances[0].position.y>0.2)
+	{ // move from prev stage pos (random), to current positions (compress all to y=0)
+		for (let i = 0; i < instanceCount - 1; i++) {
+			instances[i].position.y *= 0.98;
+		}
+	}
+	else
+	{
+		
+		
+		//if(t0>5000)
+		if(bPlaying)
+		kacti.position=new BABYLON.Vector3(0, kacti.position.y*0.98+(18+Math.sin(t0/2000)*11)*0.02, 0);
+		
+		 
+		
+		draw_i=0;
+
+		//-------------- anim pos only when:
+		var skew_anim_t=0;
+		if(bPlaying || (t0>20000 && t0<50000))
+		{
+			skew_anim_t=performance.now()/5000*anim_pos_skew_spd;
+			//--------------anim amplitude
+			if(t0>20000 && t0<40000)
+				skew_amplitude=Math.pow((t0-20000)/6,0.6);
+				else
+			if(t0>40000 && t0<50000)
+				skew_amplitude=Math.pow((50000-t0)/3,0.6);
+			else
+				skew_amplitude=skew_amplitude0;
+		}
+		//--------------
+		
+		for(let i=0;i<5;i++)
+		{
+			drawCircle(6, i*32, 0, 1.5, skew_anim_t);
+			drawCircle(6, i*32, 0, -1.5, skew_anim_t);
+		}
+		for(let i=0;i<5;i++)
+		{
+			drawCircle(7, i*32, -50, 1.5, skew_anim_t);
+		}
+		
+	}
+	let t1=performance.now();
+	setcolorData();
+	let t9=performance.now();
+		
+		if(log_i==10)
+		{
+			$('ms_setcolorData').innerText=ms_setcolorData_;
+			$('ms_drawCircles').innerText=ms_drawCircles_;
+			ms_setcolorData_=0;
+			ms_drawCircles_=0;
+			log_i=0;
+		}
+		else
+		{
+			log_i++;
+			ms_setcolorData_+=t1-t0;
+			ms_drawCircles_+=t9-t1;
+		}
+		
+	if(!bUsecameraUni)
+	{
+	camera.position = new BABYLON.Vector3(camera.position.x+Math.sin(performance.now()/4000)*0.1,camera.position.y, camera.position.z+Math.sin(performance.now()/4000)*0.1);
+	//camera.position = new BABYLON.Vector3(-1+Math.sin(performance.now()/2000)*4,25+Math.sin(performance.now()/2000)*4, -130);
+    //camera.rotation = new BABYLON.Vector3(camera.rotation.x+Math.sin(performance.now()/1000)*10, camera.rotation.y+Math.sin(performance.now()/1000)*20, camera.rotation.z);
+     }
+	 scene.render();
+	 
+         });
+		 
+//========================================================= 
+	var draw_i=0;
+	var Stick_di=1.8;
+	var Circle_R=7;
+	function drawCircle(E=4, x=0, z=0, cqew_dir=1, t)
+	{
+		for(let i=0;i<E;i++)
+		{
+			//drawStick(10, x+Math.sin(i/E*Math.PI*2)*Circle_R, z+Math.cos(i/E*Math.PI*2)*Circle_R);
+			drawStick(12, x, z, i, E, cqew_dir, t);
+		}
+		
+	}	 
+
+	function drawStick(E=8, x=0, z=0, ci=0, ce=4, cqew_dir=1, t)
+	{
+		if(t>0)	t=t+draw_i/100; //othervice it will move as circles, but not as independent poins
+		for(let i=0;i<E;i++,draw_i++)
+		{
+		//immediately set pos
+			//instances[draw_i].position.y=i*Stick_di;
+			//instances[draw_i].position.x=x;
+			//instances[draw_i].position.z=z;
+		
+		//set pos, then anim to it
+			instances_pos[draw_i*3]=i*Stick_di;
+			//---------- wo skew, opt: can do only 1st time
+			//instances_pos[draw_i*3+1]=x+Math.sin(i/E*Math.PI*2+t);
+			//instances_pos[draw_i*3+2]=z+Math.cos(i/E*Math.PI*2+t);
+			//---------- w skew
+			let stick_y_cqew=i/E/ce*Math.PI*2*cqew_dir;
+			instances_pos[draw_i*3+1]=x+Math.sin(ci/ce*Math.PI*2+stick_y_cqew)*Circle_R+Math.sin(i/E*Math.PI*2+t)*skew_amplitude;
+			instances_pos[draw_i*3+2]=z+Math.cos(ci/ce*Math.PI*2+stick_y_cqew)*Circle_R+Math.cos(i/E*Math.PI*2+t)*skew_amplitude;
+			//---------- move from prev stage pos (random), to current positions (stack of circles)
+			
+			instances[draw_i].position.y=instances[draw_i].position.y*0.99+instances_pos[draw_i*3]*0.01;
+			instances[draw_i].position.x=instances[draw_i].position.x*0.99+instances_pos[draw_i*3+1]*0.01;
+			instances[draw_i].position.z=instances[draw_i].position.z*0.99+instances_pos[draw_i*3+2]*0.01;
+			
+		}
+	}
+
+		var buffer=null;
+		function     setcolorData()
+		{
+		/*
+		if(!draw_i)
+		{
+			for (var index = 0; index < instanceCount; index++) {
+				colorData[index * 4] = Math.random();
+				colorData[index * 4 + 1] = Math.random();
+				colorData[index * 4 + 2] = Math.random();
+				colorData[index * 4 + 3] = Math.random();
+			}
+		}
+		else
+		*/
+		var t=performance.now()/1000;
+		
+		fillStriped();
+		/*
+		for (var index = 0; index < colorDataE; index+=4) { //##tst 
+			colorData[index ] =Math.sin(index/instanceCount*3.14+t);//colorData[index * 4]*0.99+ index*0.01*0.01;
+			colorData[index + 1] =Math.sin(index/instanceCount*3.14*16+t);
+			//colorData[index * 4+ 2] =Math.sin(index/instanceCount*3.14*16);
+			//colorData[index * 4 + 1] = colorData[index * 4+ 1]*0.99+ draw_i*0.01;
+			//colorData[index * 4 + 2] = colorData[index * 4+ 2]*0.99+ draw_i*0.01;
+			//colorData[index * 4 + 3] = colorData[index * 4+ 3]*0.99+ 1*0.01;
+		}
+		*/
+	
+		if(buffer!=null)buffer.dispose();
+		buffer = new BABYLON.VertexBuffer(engine, colorData, BABYLON.VertexBuffer.ColorKind, false, false, 4, true);
+		box.setVerticesBuffer(buffer);
+	}
+	
+	
+//=================led eff
+var NUM_LEDS=instanceCount;
+
+
+var effFade=211;
+var effSpeed=122;
+var effLength=122;
+var indexOrBits=111;
+
+var gColor=[155,55,0];
+var gColorBg=[0,0,111];
+
+var White=[255,255,255]
+var Black=[0,0,0]
+effSpeed=18;		effLength=22; indexOrBits=88; 
+//gColor=White; gColorBg=Black;
+ effRGB=9;
+
+
+//effSpeed=6;	/*0;6;255*/	 effLength=10;/*0;255*/ 	effFade=178;    indexOrBits=131;	gDelay=10; effRGB=9;
+
+
+//C:\_wr\_Arduino\__LEDaddr\rainbow_fastLED_controller\rainbow_fastLED_controller\eff_set2.h
+function fillStriped()
+{
+	if(effFade<100) fadeToBlackBy(colorData, NUM_LEDS, effFade/4);
+
+	for(let i=0;i<NUM_LEDS;i++)
+	{
+		// colorData[i] = (
+		//   ((byte)(i+ia_eff/(effSpeed+1)))
+		//   %effLength<(1+effLength2)
+		//   )? gColor:gColorBg;
+		let bDraw=beat8 (effSpeed,i*effLength)<indexOrBits;
+		if(bDraw) setC(colorData,i, gColor);
+		else
+		if(effFade>200)  setC(colorData,i, gColorBg);
+		
+		
+				if(effRGB==9) DisableChennel(i, ((i+performance.now()/(512-effSpeed))/4)%6);
+	}
+	
+	
+}
+
+function DisableChennel( i,  chen) //!! move to file
+{
+chen=Math.floor(chen);
+	if(chen==1 ||chen==4||chen==5)	colorData[i*4+0]=0;
+	if(chen==2 ||chen==5||chen==6)	colorData[i*4+1]=0;
+	if(chen==3 ||chen==6||chen==4)	colorData[i*4+2]=0;
+}
+
+/*
+function fillStripedInvert()
+{
+  for(let i=0;i<NUM_LEDS;i++)
+  {
+    if( beat8 (effSpeed,i*effLength)<indexOrBits ) setC(colorData,i, [255,255,255]-colorData[i]);
+  }
+}
+
+function fillStripedFillRainbow()
+{
+  for(let i=0;i<NUM_LEDS;i++)
+  {
+    colorData[i] = beat8 (effSpeed,i*effLength)<127 ? gColor:CHSV(beat8 (effSpeedH,i*effLengthH),255,255);
+  }
+}
+*/
+
+// beat16 generates a 16-bit 'sawtooth' wave at a given BPM,
+///        with BPM specified in Q8.8 fixed-point format; e.g.
+///        for this function, 120 BPM MUST BE specified as
+///        120*256 = 30720.
+///        If you just want to specify "120", use beat16 or beat8.
+function beat88(  beats_per_minute_88, timebase = 0){
+    // BPM is 'beats per minute', or 'beats per 60000ms'.
+    // To avoid using the (slower) division operator, we
+    // want to convert 'beats per 60000ms' to 'beats per 65536ms',
+    // and then use a simple, fast bit-shift to divide by 65536.
+    //
+    // The ratio 65536:60000 is 279.620266667:256; we'll call it 280:256.
+    // The conversion is accurate to about 0.05%, more or less,
+    // e.g. if you ask for "120 BPM", you'll get about "119.93".
+    return (((performance.now()) - timebase) * beats_per_minute_88 * 280) >> 16;
+}
+
+/// beat16 generates a 16-bit 'sawtooth' wave at a given BPM
+function beat16(  beats_per_minute,  timebase = 0){
+    // Convert simple 8-bit BPM's to full Q8.8 accum88's if needed
+    if( beats_per_minute < 256) beats_per_minute <<= 8;
+    return beat88(beats_per_minute, timebase);
+}
+
+/// beat8 generates an 8-bit 'sawtooth' wave at a given BPM
+//function beat8(  beats_per_minute,  timebase = 0){
+//    return beat16( beats_per_minute, timebase) >> 8;
+//}
+function beat8(  beats_per_minute,  timebase = 0)
+{
+	A=255;
+	P=60000/beats_per_minute;
+	l=(A/P) * (P - Math.abs((performance.now()+timebase) % (2*P) - P) )
+	//console.log(l)
+	return l;
+	
+	//return ((performance.now()) - timebase)%(60000/beats_per_minute)
+    //return beat16( beats_per_minute, timebase) >> 8;
+}
+/*
+// beat16 generates a 16-bit 'sawtooth' wave at a given BPM,
+///        with BPM specified in Q8.8 fixed-point format; e.g.
+///        for this function, 120 BPM MUST BE specified as
+///        120*256 = 30720.
+///        If you just want to specify "120", use beat16 or beat8.
+LIB8STATIC uint16_t beat88( accum88 beats_per_minute_88, uint32_t timebase = 0)
+{
+    // BPM is 'beats per minute', or 'beats per 60000ms'.
+    // To avoid using the (slower) division operator, we
+    // want to convert 'beats per 60000ms' to 'beats per 65536ms',
+    // and then use a simple, fast bit-shift to divide by 65536.
+    //
+    // The ratio 65536:60000 is 279.620266667:256; we'll call it 280:256.
+    // The conversion is accurate to about 0.05%, more or less,
+    // e.g. if you ask for "120 BPM", you'll get about "119.93".
+    return (((GET_MILLIS()) - timebase) * beats_per_minute_88 * 280) >> 16;
+}
+
+/// beat16 generates a 16-bit 'sawtooth' wave at a given BPM
+LIB8STATIC uint16_t beat16( accum88 beats_per_minute, uint32_t timebase = 0)
+{
+    // Convert simple 8-bit BPM's to full Q8.8 accum88's if needed
+    if( beats_per_minute < 256) beats_per_minute <<= 8;
+    return beat88(beats_per_minute, timebase);
+}
+
+/// beat8 generates an 8-bit 'sawtooth' wave at a given BPM
+LIB8STATIC uint8_t beat8( accum88 beats_per_minute, uint32_t timebase = 0)
+{
+    return beat16( beats_per_minute, timebase) >> 8;
+}
+*/
+function setC(colorData,i, c)
+{
+i*=4;
+colorData[i]=c[0];
+colorData[i+1]=c[1];
+colorData[i+2]=c[2];
+}
+
+function fadeToBlackBy( leds,  num_leds, fadeBy)
+{
+    nscale8( leds, num_leds, (255 - fadeBy)/255);
+}
+function nscale8(  leds,  num_leds,  scale)
+{
+    for( let i = 0; i < num_leds; i+=4) {
+        leds[i]*=scale;
+        leds[i+1]*=scale;
+        leds[i+2]*=scale;
+    }
+}
+//------------
+var bPlaying=false;
+function toggle_Anim_mus(o)
+{
+		if(bPlaying)
+		{
+			$('aud').pause();
+			bPlaying=false;
+		}
+		else
+		{
+			$('aud').play();
+			bPlaying=true;
+		}
+		o.className =bPlaying?'Rl':'Bl';
+}
+//----------------------
+document.addEventListener('keydown', logKey);
+
+var bUsecameraUni=false;
+function logKey(e) {
+if(bUsecameraUni) return;
+ switch(e.code)
+ {
+  case 'ArrowLeft':
+  case 'ArrowRight':
+  case 'ArrowUp':
+  case 'ArrowDown':
+  cameraUni.position=camera.position;
+  cameraUni.rotation=camera.rotation;
+  cameraUni.setTarget(camera.target);
+  scene.activeCamera=cameraUni;
+  bUsecameraUni=true;
+  //
+  break;
+  /*
+  case 'ControlLeft': 
+  case 'ControlRight': 
+
+	//cameraUni.position.y-=0.5; //TODO https://doc.babylonjs.com/divingDeeper/cameras/customizingCameraInputs
+	//console.log( cameraUni.position);
+	//cameraUni.attachControl(canvas, true);
+  break;
+  */
+  
+  //default:
+  //console.log( ` ${e.code}`);
+  //break;
+ }
+  
+}
+      </script>
+	  <br>
+	  <button class='Bl' onCLick="toggle_Anim_mus(this);">power</button>
+	  <br>
+	<p id='ms_setcolorData'></p>
+	<p id='ms_drawCircles'></p>
+<audio id="aud" controls>
+	<source src="2021-04-17 [draft BB].opus" >
+</audio>
+   </body>
+</html>
