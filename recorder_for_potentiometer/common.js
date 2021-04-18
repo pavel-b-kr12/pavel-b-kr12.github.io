@@ -7,6 +7,7 @@ function sleep(ms) {
    while (currentTime + ms >= new Date().getTime()) {   }
 }
 
+//TODO test speed
 //----------
  //RGB to HSL https://stackoverflow.com/questions/41229411/how-to-optimize-execution-time-for-rgb-to-hsl-conversion-function
 //----------

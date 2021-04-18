@@ -2,10 +2,10 @@
 <html>
    <head>
       <meta charset = "utf-8">
-      <title>MDN Games: Babylon.js demo - shapes</title>
+      <title>MDN Games: Babylon.js demo - shapes</title><link rel="icon" href="data:,">
       <!-- <script src = "https://cdn.babylonjs.com/babylon.js"></script> -->
       <!-- <script src = "babylon.furMaterial.js"></script> -->
-        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script> -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
         <!-- <script src="https://preview.babylonjs.com/ammo.js"></script> -->
         <!-- <script src="https://preview.babylonjs.com/cannon.js"></script> -->
         <!-- <script src="https://preview.babylonjs.com/Oimo.js"></script> -->
@@ -251,10 +251,13 @@ matWallW.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
 	window.addEventListener("resize", function () {  engine.resize(); });
 	return scene;
 };
+
 var scene = createScene();
+
 //=================================================
 engine.runRenderLoop(function() {
-		 let t0=performance.now();
+	let t0=performance.now();
+	gHue++; if(gHue>255) gHue=0;
 		 
 	//for (instance_i = 0; instance_i < instanceCount - 1; instance_i++) {
 	if(instance_i < instanceCount)
@@ -337,7 +340,7 @@ engine.runRenderLoop(function() {
 		
 	if(!bUsecameraUni)
 	{
-	camera.position = new BABYLON.Vector3(camera.position.x+Math.sin(performance.now()/4000)*0.1,camera.position.y, camera.position.z+Math.sin(performance.now()/4000)*0.1);
+	camera.position = new BABYLON.Vector3(camera.position.x+Math.sin(performance.now()/5000)*0.1,camera.position.y, camera.position.z+Math.sin(performance.now()/7000)*0.1);
 	//camera.position = new BABYLON.Vector3(-1+Math.sin(performance.now()/2000)*4,25+Math.sin(performance.now()/2000)*4, -130);
     //camera.rotation = new BABYLON.Vector3(camera.rotation.x+Math.sin(performance.now()/1000)*10, camera.rotation.y+Math.sin(performance.now()/1000)*20, camera.rotation.z);
      }
@@ -404,7 +407,14 @@ engine.runRenderLoop(function() {
 		*/
 		var t=performance.now()/1000;
 		
-		fillStriped();
+		
+		switch(effN)
+		{
+			case 0: fillStriped(); break;
+			case 1: rainbowSpawn_moveFromStartWithSeparators(); break;
+		}
+		
+		
 		/*
 		for (var index = 0; index < colorDataE; index+=4) { //##tst 
 			colorData[index ] =Math.sin(index/instanceCount*3.14+t);//colorData[index * 4]*0.99+ index*0.01*0.01;
@@ -423,6 +433,11 @@ engine.runRenderLoop(function() {
 	
 	
 //=================led eff
+var ia_eff=0; //strart effect from 0 counter, reset on choose new eff
+
+var effN=0;
+var gHue=0;
+
 var NUM_LEDS=instanceCount;
 
 
@@ -439,6 +454,7 @@ var Black=[0,0,0]
 effSpeed=18;		effLength=22; indexOrBits=88; 
 //gColor=White; gColorBg=Black;
  effRGB=9;
+
 
 
 //effSpeed=6;	/*0;6;255*/	 effLength=10;/*0;255*/ 	effFade=178;    indexOrBits=131;	gDelay=10; effRGB=9;
@@ -465,6 +481,51 @@ function fillStriped()
 	}
 	
 	
+}
+
+function  rainbowSpawn_moveFromStartWithSeparators()
+{
+	//if(ia_eff%abs(NUM_LEDS/2-effSpeed) == 0)
+	for(let i = NUM_LEDS-1; i >0 ; i--) 
+	{
+		setC(colorData,i, getC(colorData,i-1));
+		//leds[i].nscale8(253); 
+	}
+	setC(colorData,0,CHSV(gHue,255,
+			//((ia_eff+beatsin8(effLength, 0, effLength))%(effLength/2)>effLength/8)
+			//beatsin8
+			((ia_eff+beat8(1+effSpeed/8, 0, effLength))%effLength>effLength/4)
+			?0   //black separators
+			:255
+			)
+			);
+			
+}
+
+
+
+function CHSV(h, s, v) { //hsvToRgb
+h/=255;
+s/=255;
+v/=255;
+  var r, g, b;
+
+  var i = Math.floor(h * 6);
+  var f = h * 6 - i;
+  var p = v * (1 - s);
+  var q = v * (1 - f * s);
+  var t = v * (1 - (1 - f) * s);
+
+  switch (i % 6) {
+    case 0: r = v, g = t, b = p; break;
+    case 1: r = q, g = v, b = p; break;
+    case 2: r = p, g = v, b = t; break;
+    case 3: r = p, g = q, b = v; break;
+    case 4: r = t, g = p, b = v; break;
+    case 5: r = v, g = p, b = q; break;
+  }
+
+  return [ r * 255, g * 255, b * 255 ];
 }
 
 function DisableChennel( i,  chen) //!! move to file
@@ -565,6 +626,12 @@ LIB8STATIC uint8_t beat8( accum88 beats_per_minute, uint32_t timebase = 0)
     return beat16( beats_per_minute, timebase) >> 8;
 }
 */
+function getC(colorData,i)
+{
+ i*=4;
+ return [colorData[i],colorData[i+1],colorData[i+2]];
+}
+
 function setC(colorData,i, c)
 {
 i*=4;
@@ -637,8 +704,28 @@ if(bUsecameraUni) return;
   
 }
       </script>
+	  
+ 
+ <!--TODO
+ https://stackoverflow.com/questions/35921543/set-value-of-range-tag-to-before-content
+ 
+
+ $('val_sliders').innerHTML+=`<input type="range" min="0" max="255" oninput="effFade = this.value">123</input>`
+ -->
+ 
+	  <div id='val_sliders'>
+	  This is not implemented properly:
+	  <input type="range" min="0" max="2" oninput="effN = parseInt(this.value);ia_eff=0" value='0'>effN</input>
+	  <input type="range" min="0" max="255" oninput="effFade = parseInt(this.value)">effFade</input>
+	  <input type="range" min="0" max="255" oninput="effSpeed = parseInt(this.value);">effSpeed</input>
+	  <input type="range" min="0" max="255" oninput="effLength = parseInt(this.value);">effLength</input>
+	  <input type="range" min="0" max="255" oninput="effLength = parseInt(this.value);">indexOrBits</input>
+	  <input type="range" min="0" max="255" oninput="gColor[0] = parseInt(this.value);">gColor[0]</input>
+	  <input type="range" min="0" max="255" oninput="gColorBg[0] = parseInt(this.value);">gColorBg[0]</input>
+	  <input type="range" min="0" max="22" oninput="effRGB = parseInt(this.value);">effRGB</input>
+	  </div>
 	  <br>
-	  <button class='Bl' onCLick="toggle_Anim_mus(this);">power</button>
+	  <button class='Bl' onCLick="toggle_Anim_mus(this);">power</button> TODO: port sys and more eff from https://github.com/pavel-b-kr12/LEDController2812IR 
 	  <br>
 	<p id='ms_setcolorData'></p>
 	<p id='ms_drawCircles'></p>
