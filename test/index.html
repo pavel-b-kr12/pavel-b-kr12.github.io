@@ -1,0 +1,122 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+
+.Y{color: yellow; }
+.B{color: blue;}
+.W{color: white;}
+body {
+  background-color: black;
+  font-size:4vw;
+  text-align: center;
+}
+h1 {display: inline; font-family: 'Press Start 2P', cursive; }
+
+</style>
+<body>
+<br>
+<br>
+<h1 id='l0'>Ц</h1><h1 id='l1'>У</h1><h1 id='l2'>М</h1>
+<br>
+<br>
+<br>
+<br>
+<h1 id='lb0'>Ц</h1><h1 id='lb1'>У</h1><h1 id='lb2'>М</h1>
+
+<script>
+function $(s) {return document.getElementById(s);}
+
+function loop()
+{
+ let t=(performance.now()/155%11)|0;
+console.log(t)
+ switch(t)
+ {
+  case 2:
+  $('l0').className='W';
+  $('l1').className='W';
+  $('l2').className='W';
+  break;
+  case 3:
+  $('l0').className='Y';
+  $('l1').className='W';
+  $('l2').className='W';
+  break;
+  case 4:
+  $('l0').className='B';
+  $('l1').className='Y';
+  $('l2').className='W';
+  break;
+  case 5:
+  $('l0').className='Y';
+  $('l1').className='B';
+  $('l2').className='Y';
+  break;
+  case 6:
+  $('l0').className='W';
+  $('l1').className='Y';
+  $('l2').className='B';
+  break;
+  case 7:
+  $('l0').className='W';
+  $('l1').className='W';
+  $('l2').className='Y';
+  break;
+  case 8:
+  $('l0').className='W';
+  $('l1').className='W';
+  $('l2').className='W';
+  break;
+  
+ }
+ 
+ 
+ switch(t)
+ {
+  case 2:
+  $('lb0').className='W';
+  $('l1').className='W';
+  $('lb2').className='W';
+  break;
+  case 3:
+  $('lb0').className='B';
+  $('lb1').className='W';
+  $('lb2').className='W';
+  break;
+  case 4:
+  $('lb0').className='Y';
+  $('lb1').className='B';
+  $('lb2').className='W';
+  break;
+  case 5:
+  $('lb0').className='B';
+  $('lb1').className='Y';
+  $('lb2').className='B';
+  break;
+  case 6:
+  $('lb0').className='W';
+  $('lb1').className='B';
+  $('lb2').className='Y';
+  break;
+  case 7:
+  $('lb0').className='W';
+  $('lb1').className='W';
+  $('lb2').className='B';
+  break;
+  case 8:
+  $('lb0').className='W';
+  $('lb1').className='W';
+  $('lb2').className='W';
+  break;
+  
+ }
+ 
+ window.requestAnimationFrame(loop);
+}
+
+window.requestAnimationFrame(loop);
+
+</script>
+</body>
