@@ -241,7 +241,7 @@ function setup() {
 	gui.add(oo, 'textOnBy1fade');
 	gui.add(oo, 'change_to_random');
 	gui.add(oo, 'move_');
-	gui.add(oo, 'move_ooposit_');
+	gui.add(oo, 'move_ooposit_cycle_');
 	gui.add(oo, 'moveCycle_');
 	gui.add(oo, 'move_bounce_');
 	gui.add(oo, 'moveSin_');
@@ -497,10 +497,10 @@ function move(c_m, c_M, dt, len)
 	}
 }
 
-function move_ooposit_(){
- move_ooposit(0, 255, 80, 2000);
+function move_ooposit_cycle_(){
+ move_ooposit_cycle(0, 255, LEDE+1, 80, 2000);
 }
-function move_ooposit(c_m, c_M, dt, len)
+function move_ooposit_cycle(c_m, c_M, moveLen, dt, len)
 {
 	if(delay_ret(oo.dt)) return;
 	{
@@ -509,7 +509,7 @@ function move_ooposit(c_m, c_M, dt, len)
 			cc[n]=(led_i==n||LEDE-1-led_i==n)?c_M:c_m;
 		}
 
-		led_i++;
+		led_i++; if(led_i>=moveLen) led_i=0;
 		show(); delay(dt);
 	}
 }
@@ -702,8 +702,8 @@ var oo=
  textOnBy1fade:function(){this.ff=textOnBy1fade;  outline_set(false); led_sel=99;oo.dt=100;},
  change_to_random:function(){ this.ff=change_to_random_ ; setTimeout(outline_set, 6000, false); oo.dt=100;},
  
- move_:function(){this.ff=move_;  outline_set(false); led_i=0; toggle_underTexture_for_underline();oo.dt=100;},
- move_ooposit_:function(){this.ff=move_ooposit_;  outline_set(false); led_i=0; toggle_underTexture_for_underline();oo.dt=250;},
+ move_:function(){this.ff=move_;  outline_set(false); led_i=0; toggle_underTexture_for_underline();},
+ move_ooposit_cycle_:function(){this.ff=move_ooposit_cycle_;  outline_set(false); led_i=0; toggle_underTexture_for_underline();oo.dt=238;},
  moveCycle_:function(){this.ff=moveCycle_;  outline_set(false); led_sel=99;oo.dt=100;},
  move_bounce_:function(){this.ff=move_bounce_;  outline_set(true); led_sel=99; toggle_underTexture_for_underline();oo.dt=100;},
  moveSin_:function(){this.ff=moveSin_;  outline_set(false); led_sel=99;oo.bpm=21;oo.dt=1;},
