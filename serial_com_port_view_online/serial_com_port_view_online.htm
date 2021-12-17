@@ -195,7 +195,7 @@ settingsFromURL()
 </script>
 	
 	
-	<script>
+<script>
 function componentToHex(c) {
   var hex = c.toString(16);
   return hex.length == 1 ? "0" + hex : hex;
@@ -222,7 +222,7 @@ function draw() {
 if(bStop) return;
 	var t0=window.performance.now();
 
-	if(dataArr.length<=20)
+	if(dataArr.length<=20) //show current data as big squares under plot
 	{
 		if(dataArr_divs_arr.length<dataArr.length) //create elements for each data value
 		{
@@ -248,8 +248,8 @@ if(bStop) return;
 	for(let y=0, n=0;y<stt.hh;y++){
 	for(let x=0;x<stt.ww;x++,n+=4) {
 	
-	  if(y==stt.hh-1) //draw 1 line
-	  {
+		if(y==stt.hh-1) //draw 1 line
+		{
 		 if(x<dataArr.length*stt.zoomW) //TODO use zoomH
 		 {
 			let value = dataArr[Math.floor(x/stt.zoomW)]/stt.data_val_pixel_DIV;
@@ -340,6 +340,7 @@ draw: <i id='t'></i>ms; packet_dt: <i id='packet_dt'></i>ms; packet loss: <i id=
 <!-- <input id='sliderSpeed' type="range" min="1" max="100" value="10" oninput="sliderSpeed_change(this.value)"> <i id='sliderSpeed_txt'>speed</i><br> -->
 
 <script>
+/*
 document.body.onkeyup = function(e){
 if(e.keyCode == 32){$('stop_sw').click()}
 else{
@@ -353,6 +354,7 @@ if(e.key == 'v'){$('btn_show_visits').click()} //shift
 else
 showArr='f';
 }
+*/
 </script>
 <script>
 let sendText = document.getElementById("sendText");
@@ -364,7 +366,7 @@ let statusBar = document.getElementById("statusBar");
 //When the btn_connect is pressed
 async function clickConnect() {
     if (port) {   //if already connected, disconnect
-        disconnect();
+        disconnectSerial();
     } else {      //otherwise connect
         await connect();
     }
@@ -421,7 +423,6 @@ async function connect() { //TODO upd from 3d line builder
 
         readLoop();
     } catch (e) {
-
         //If the pipeTo error appears; clarify the problem by giving suggestions.
         if (e == "TypeError: Cannot read property 'pipeTo' of undefined") {
             e += "\n Enable in Chromium: <a href='chrome://flags/#enable-experimental-web-platform-features'>chrome://flags/#enable-experimental-web-platform-features</a> "
@@ -430,16 +431,8 @@ async function connect() { //TODO upd from 3d line builder
         statusBar.innerText = e;
     }
 }
-//Write to the Serial port
-async function writeToStream(line) {
-    const writer = outputStream.getWriter();
-    writer.write(line);
-    writer.releaseLock();
-}
 
-//Disconnect from the Serial port
-async function disconnect() {
-
+async function disconnectSerial() {
     if (reader) {
         await reader.cancel();
 		if(inputDone!=null)
@@ -455,12 +448,17 @@ async function disconnect() {
     }
     statusBar.innerText = "Disconnected";
     btn_connect.innerText = "Connect"
-    //Close the port.
+
     await port.close();
     port = null;
 }
 
-//When the send button is pressed
+//Write to the Serial port
+async function writeToStream(line) {
+    const writer = outputStream.getWriter();
+    writer.write(line);
+    writer.releaseLock();
+}
 function clickSend() {
     //send the message
     writeToStream(sendText.value)
@@ -709,7 +707,7 @@ void loop(){
 </div>
 
 
-  <div class="legend">
+<div class="legend">
   <span class="dot oR">capacitive</span>
   <span class="dot oG">r water</span>
   <span class="dot oB">r moisture</span>
@@ -728,7 +726,6 @@ for (let i = 0, coll = document.getElementsByClassName("collapsible"); i < coll.
 }
 </script>
 <script>
-
 // Initial value for the position; center of the container
 const dataPlot = Ola(0, 930);
 

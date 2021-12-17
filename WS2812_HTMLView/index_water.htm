@@ -2,7 +2,7 @@
 <html>
    <head>
       <meta charset = "utf-8">
-      <title>MDN Games: Babylon.js demo - shapes</title><link rel="icon" href="data:,">
+      <title>WS2812_HTMLView pyramid water demo</title><link rel="icon" href="data:,">
       <!-- <script src = "https://cdn.babylonjs.com/babylon.js"></script> -->
       <!-- <script src = "babylon.furMaterial.js"></script> -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
@@ -141,7 +141,7 @@ function addPic(nm, x,y,z,s, waterMaterial)
 
  engine.setStencilBuffer(true);
 
-    scene.setRenderingAutoClearDepthStencil(0, true, true, true);
+    //scene.setRenderingAutoClearDepthStencil(0, true, true, true);
     scene.setRenderingAutoClearDepthStencil(1, false, false, false);
 
     // Skybox
@@ -165,7 +165,6 @@ function addPic(nm, x,y,z,s, waterMaterial)
     waterMaterial.waveSpeed = 30.0;
     waterMaterial.colorBlendFactor = 0;
     waterMaterial.windDirection = new BABYLON.Vector2(1, 1);
-    waterMaterial.colorBlendFactor = 0;
 
     // Ground
     var groundTexture = new BABYLON.Texture("//www.babylonjs.com/assets/sand.jpg", scene);

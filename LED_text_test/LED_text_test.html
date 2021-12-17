@@ -1,0 +1,839 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LED PWM eff test</title>
+  <meta name="description" content="test simple white dimmer light effects">
+
+  <!-- <link rel="stylesheet" href="css/styles.css?v=1.0"> -->
+  <script type="text/javascript" src="..\lib\dat.gui.min.js"></script>
+  <script src="..\lib\p5.min.js"></script>
+<style>
+
+audio::-webkit-media-controls-panel {
+  background-color: #887777;
+  color: #887777;
+}
+
+h3 {
+font-size: 10vw;
+color: white;
+display: inline-block;
+margin: 2vw;
+
+font-family: 'Montserrat', 'Mplus 1p', 'Hiragino Sans', 'Hiragino Kaku Gothic Pro', '游ゴシック' , '游ゴシック体' , YuGothic , 'Yu Gothic', 'ＭＳ ゴシック' , 'MS Gothic', sans-serif;
+-webkit-font-smoothing antialiased;
+}
+
+h4{
+z-index:99;
+font-size: 1.2vw;
+position:relative;
+display: inline-block;
+left:-1.2vw;
+color: lightgrey;
+}
+
+.underline
+{
+position:relative;
+display:block;
+top:14vw;
+height:0.5vw;
+width:10vw;
+}
+
+.underTexture{
+z-index:-1;
+}
+
+
+.outlineR{
+-webkit-text-stroke: 0.3vw #511;
+}
+.outlineO{
+-webkit-text-stroke: 0.3vw #521;
+}
+.outlineY{
+-webkit-text-stroke: 0.3vw #551;
+}
+.outlineG{
+-webkit-text-stroke: 0.3vw #151;
+}
+.outlineB{
+-webkit-text-stroke: 0.3vw #115;
+}
+.outlinePp{
+-webkit-text-stroke: 0.3vw #515;
+}
+
+
+.R  {
+background-color: red;
+}
+.O  {
+background-color: orange;
+}
+.Y  {
+background-color: yellow;
+}
+.G  {
+background-color: green;
+}
+.B  {
+background-color: blue;
+}
+.Pp  {
+background-color: purple;
+}
+
+body {
+  background-color: black;
+  color: yellow;
+}
+
+.h1{
+color:  lightgrey
+}
+</style>
+ <style>
+.tooltip {
+  position: relative;
+  /*display: inline-block;*/
+  border-bottom: 1px dotted black;
+}
+
+.tooltip .tooltiptext {
+font-size: 2vw;
+all: initial;
+
+  visibility: hidden;
+  width: 120px;
+  background-color: #888;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 99;
+  top: 100%;
+  left: 50%;
+  margin-left: -60px;
+/*
+ visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  */
+}
+
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  
+      bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #555 transparent;
+	z-index: 99;
+  /*
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+  */
+}
+/*
+.tooltip-bottom {
+    top: 135%;
+    left: 50%;
+    margin-left: -60px;
+}
+.tooltip-bottom::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #555 transparent;
+}
+*/
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/*.dg.a { margin-right:60px !important; }*/
+#gui { position: absolute; top: 46vh; right: 4vw; }
+</style> 
+<script>
+function $(s) {return document.getElementById(s);}
+function rand() {return Math.random()}
+const random = (min=0, max=255) => Math.floor(Math.random() * (max - min)) + min;
+const random8=random;
+//const rgb2hex = (rgb) => `#${rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/).slice(1).map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('')}`
+//console.log(rgba2hex('rgb(38, 170, 90)')) //https://stackoverflow.com/questions/1740700/how-to-get-hex-color-value-rather-than-rgb-value
+//console.log(rgba2hex('rgba(255, 0, 0, 0.5)'))
+
+function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+function rgbToHex(r, g, b) { //rgbToHex(0, 51, 255) > #0033ff
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+//-------------------------------
+var LEDE=6;
+cc=[0,0,0,0,0,0];
+els=[];
+
+
+var stt={
+ ww:1024,
+ hh:512,
+ zoomW:40,
+ zoomH:1,
+ format: 'TSV', //TSV bin0_254
+ //serSpeed:115200,
+ serSpeed:1000000,
+ data_val_pixel_DIV:1, //use 1 when got data 0...255,  4 for 0..1023
+};
+var dataArr=[];
+var dataArr_i=0;
+var dataArr_buffer=[];
+function setup() {
+	createCanvas(stt.ww, stt.hh);
+
+	for(i=0;i<LEDE;i++)
+	{
+	 els[i]=$('l'+i);
+	}
+
+	var gui = new dat.gui.GUI();//{ autoPlace: false }
+	gui.domElement.id = 'gui';
+	gui.remember(oo);
+
+	gui.add(oo, 'fadeAll');
+	gui.add(oo, 'bSame');
+
+	gui.add(oo, 'blinkRandom');
+	gui.add(oo, 'textOnBy1fade');
+	gui.add(oo, 'change_to_random');
+	gui.add(oo, 'move_');
+	gui.add(oo, 'moveCycle_');
+	gui.add(oo, 'move_bounce_');
+	gui.add(oo, 'moveSin_');
+	gui.add(oo, 'beatSin4_');
+	gui.add(oo, 'beatSin4_1');
+	gui.add(oo, 'beatSin4randt_');
+	gui.add(oo, 'random_changing_');
+	gui.add(oo, 'gen_random_move_1');
+	gui.add(oo, 'gen_random_move_');
+	
+
+	
+	gui.add(oo, 'dt').min(1).max(500).step(1);
+	gui.add(oo, 'bpm').min(1).max(120).step(1);
+	
+	gui.add(oo, 'outline_sw');
+}
+//TODO port C:\_wr\pavel-b-kr12.github.io\serial_com_port_view_online\serial_com_port_view_online.htm
+function draw() {
+	oo.ff();
+	
+	loadPixels();
+	//let d = pixelDensity(); //https://p5js.org/reference/#/p5/pixels
+	for(let y=0, n=0;y<stt.hh;y++){
+	for(let x=0;x<stt.ww;x++,n+=4) {
+	
+	  if(y==stt.hh-1) //draw 1 line
+	  {
+		 if(x<dataArr.length*stt.zoomW) //TODO use zoomH
+		 {
+			let value = dataArr[Math.floor(x/stt.zoomW)]/stt.data_val_pixel_DIV;
+			//if(value==0&&pixels[n]==0) continue; //skip unused
+			//if(value!=0&& pixels[n]!=0) continue;
+			//buffer32[n] =  value<<8   //(255   << 24) |value<<8
+			//for(let wi=0;wi<stt.zoomW;wi++)
+			{
+				pixels[n] = value;
+				pixels[(n + 1)] = value>=254?value/2:value; //red for 255
+				//pixels[n + 2] = value>=254?0:Math.log(value)*33;//110;
+				pixels[n + 2] = Math.sqrt(1/(256-value))*255;
+				pixels[(n + 3)] = 255;
+			}
+
+		 }
+		}else //shift pixels of other lines
+		{
+			let value = dataArr[x]/stt.data_val_pixel_DIV;
+			pixels[n] = pixels[n+stt.ww*4];
+			pixels[n + 1] = pixels[n+1+stt.ww*4];
+			pixels[n + 2] = pixels[n+2+stt.ww*4];//110;
+			pixels[n + 3] = 255;
+		}
+
+	}
+	}
+	updatePixels();
+}	
+
+/*
+$("#stop").on("click", function() {
+  cancelAnimationFrame(globalID);
+});
+$("#start").on("click", function() {
+  globalID = requestAnimationFrame(repeatOften);
+});*/
+
+tt=0;
+function delay_ret(dt){
+ if(performance.now()>tt)
+ {
+	tt=performance.now()+dt;
+	return false;
+ }
+ return true; //wait
+}
+function nop(){}
+function delay(){}
+function show(){
+	for(i=0;i<LEDE;i++)
+	{
+	 cc[i]=Math.round(cc[i])
+	 els[i].style.color=rgbToHex(cc[i],cc[i],cc[i]);
+	 dataArr[i]=cc[i];
+	}
+	 
+}
+function setAll(c){
+	for(i=0;i<LEDE;i++)
+	 cc[i]=c;
+}
+function outline_set(b)
+{
+ if(b)
+ {
+	els[0].classList.add('outlineR');
+	els[1].classList.add('outlineO');
+	els[2].classList.add('outlineY');
+	els[3].classList.add('outlineG');
+	els[4].classList.add('outlineB');
+	els[5].classList.add('outlinePp');
+ }else
+ {
+	els[0].classList.remove('outlineR');
+	els[1].classList.remove('outlineO');
+	els[2].classList.remove('outlineY');
+	els[3].classList.remove('outlineG');
+	els[4].classList.remove('outlineB');
+	els[5].classList.remove('outlinePp');
+ }
+
+}
+//------------------------eff
+
+function fadeAll(){
+	if(oo.bSame)
+	{
+		cc[0]+=2;
+		cc[0]%=256
+		for(i=1;i<LEDE;i++)
+			cc[i]=cc[0];
+	}
+	else
+	{
+		for(i=0;i<LEDE;i++)
+		{
+			//if(rand()>0.7)
+			{
+				cc[i]+=2;
+				cc[i]%=256
+			}
+		}
+	}
+	show();
+}
+var b1st=true;
+function textOnBy1fade(){
+	//if(b1st) {b1st=false; setAll(0);}
+	if(led_sel>5)
+	{
+		led_sel=0;
+		setAll(0);
+	}
+		
+	if(cc[led_sel]>=255)
+	{
+		led_sel++;
+
+	}
+	else
+		cc[led_sel]+=Math.round(500/(1+oo.dt));
+	
+	show();
+}
+
+
+var led_i=99;
+var led_sel=0;
+
+function blinkRandom(){
+	if(delay_ret(oo.dt)) return;
+//console.log(led_sel)
+	cc[led_sel]=0;
+	led_sel=random(0,LEDE);
+	cc[led_sel]=255;
+	show();
+}
+
+var cc_target=[0,0,0,0,0,0]
+
+function change_to_random( c_m,  c_M,  ch,  dt,  len)
+{
+	for(var n=0;n<LEDE;n++)
+	{
+		if(cc[n]==cc_target[n]) continue;
+		
+		if(cc[n]<cc_target[n])
+		{
+			if(cc[n]+ch<cc_target[n]) cc[n]+=ch;
+			else  cc[n]=cc_target[n];
+		}
+		else
+		{
+			if(cc[n]-ch>cc_target[n]) cc[n]-=ch;
+			else  cc[n]=cc_target[n];
+		}
+	}
+	show();
+		
+	if(delay_ret(oo.dt*20)) return;
+	
+	for(var n=0;n<LEDE;n++)
+	{
+		cc_target[n]=random8(c_m, c_M);
+	}
+}
+function change_to_random_()
+{
+change_to_random( 10,  255,  2,  0,  0);
+}
+
+
+
+
+function fade_all_to(c_target, add, dt, len)
+{
+	if(delay_ret(oo.dt)) return;
+	{
+		for(var n=0;n<LEDE;n++)
+		{
+			if(add>0)
+			{
+				if(cc[n]<c_target-add)
+					cc[n]+=add;
+				else
+					cc[n]=c_target;
+			}
+			else
+			{
+				if(cc[n]>c_target-add)
+					cc[n]+=add;
+				else
+					cc[n]=c_target;
+			}
+		}
+		show(); delay(dt);
+	}
+}
+
+
+var i_s=0;
+
+function move_(){
+ move(0, 255, 80, 2000);
+}
+function move(c_m, c_M, dt, len)
+{
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			cc[n]=led_i==n?c_M:c_m;
+		}
+		led_i++;
+		show(); delay(dt);
+	}
+}
+function moveCycle_(){
+ moveCycle(0, 255, LEDE+1, 220, 5000); 
+}
+function moveCycle(c_m, c_M, moveLen, dt, len)
+{
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			cc[n]=led_i==n?c_M:c_m;
+		}
+		led_i++; if(led_i>=moveLen) led_i=0;
+		show(); delay(dt);
+	}
+}
+function move_bounce_(){
+ move_bounce(20, 255, LEDE, 160, 5000); 
+}
+function move_bounce(c_m, c_M, dt, len)
+{
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			cc[n]=Math.abs(LEDE-led_i%(LEDE*2))==n?c_M:c_m;
+		}
+		led_i++;
+		show(); delay(dt);
+	}
+}
+
+
+
+function moveSin_(){
+ moveSin(20, 255, 30, oo.dt, 5000);
+}
+function moveSin(c_m, c_M, freq, dt, len)
+{
+	if(delay_ret(dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			cc[n]=beatsin8(freq,c_m,c_M);
+		}
+		show();
+	}
+}
+
+function beatsin8(bpm, m, M, t0=1, t_offset=0)
+{
+ //console.log(bpm, m, M, t0, t_offset)
+ var range=M-m;
+ return (Math.sin(performance.now()/1000*Math.PI/60*oo.bpm*t0+t_offset)+1)*range*0.5+m;
+}
+	n_timebase=[];
+	n_timeoffset=[];
+	var timeoffset_mul=1;
+function beatSin4_(){
+	beatSin4(20, 255, 21, 2245, 10, 6000);
+}
+function beatSin4(c_m, c_M, bpm, timeoffset_mul, dt, len)
+{
+
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			cc[n]=
+			(
+			// beatsin8(5,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(11,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(16,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(27,0,255,n_timebase[n], n_timeoffset[n])
+			beatsin8(oo.bpm-20,0,255,n_timebase[n], n_timeoffset[n])+
+			beatsin8(oo.bpm-14,0,255,n_timebase[n], n_timeoffset[n])+
+			beatsin8(oo.bpm-9,0,255,n_timebase[n], n_timeoffset[n])+
+			beatsin8(oo.bpm,0,255,n_timebase[n], n_timeoffset[n])
+			// beatsin8(oo.bpm,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(7+oo.bpm,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(11+oo.bpm,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(22+oo.bpm,0,255,n_timebase[n], n_timeoffset[n])
+			)/4;
+		}
+		show(); delay(dt);
+	}
+}
+
+
+function beatSin4randt_(){
+ beatSin4randt(0, 255, 63, 10, 6000);
+}
+function beatSin4randt(c_m, c_M, bpm, dt, len)
+{
+//console.log(c_m, c_M, bpm, dt, len)
+	
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			cc[n]=
+			(
+			// beatsin8(5,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(11,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(16,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(27,0,255,n_timebase[n], n_timeoffset[n])
+			beatsin8(oo.bpm-20,0,255,n_timebase[n], n_timeoffset[n])+
+			beatsin8(oo.bpm-14,0,255,n_timebase[n], n_timeoffset[n])+
+			beatsin8(oo.bpm-9,0,255,n_timebase[n], n_timeoffset[n])+
+			beatsin8(oo.bpm,0,255,n_timebase[n], n_timeoffset[n])
+			// beatsin8(oo.bpm,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(7+oo.bpm,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(11+oo.bpm,0,255,n_timebase[n], n_timeoffset[n])+
+			// beatsin8(22+oo.bpm,0,255,n_timebase[n], n_timeoffset[n])
+			)/4;
+		}
+		show(); delay(dt);
+	}
+}
+
+function random_changing_(){
+ random_changing(40, 255, 6, 10, 6000);
+}
+function random_changing(c_m, c_M, addM, dt, len)
+{
+
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			if(cc[n]<=cc_target[n])
+			{
+				cc[n]+=random8(0,addM)-1;
+				if(cc[n]>=cc_target[n])
+				{
+					cc[n]=cc_target[n];
+					cc_target[n]=random8(c_m, c_M);
+				}
+			}
+			else
+			if(cc[n]>cc_target[n])
+			{
+				cc[n]-=random8(0,addM)+1;
+				if(cc[n]<=cc_target[n])
+				{
+					cc[n]=cc_target[n];
+					cc_target[n]=random8(c_m, c_M);
+				}
+			}
+			
+			//cc[n]=constrain(cc[n],c_m,c_M);
+			
+		}
+		
+		show(); delay(dt);
+	}
+}
+
+function gen_random_move_(){
+ gen_random_move(10,255, 130, 3000);
+}
+function gen_random_move_1(){
+ gen_random_move(50,255, 440, 8000);
+}
+function gen_random_move(c_m, c_M, dt, len)
+{
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=LEDE-1;n>0;n--)
+		{
+			cc[n]=cc[n-1];
+		}
+		cc[0]=random8(c_m,c_M);
+		
+		show(); delay(dt);
+	}
+}
+//------------------------------------
+
+var oo=
+{
+ ff:nop,
+ 
+ bSame:false,
+ fadeAll:function(){this.ff=fadeAll; outline_set(true);oo.dt=100;},
+ blinkRandom:function(){this.ff=blinkRandom;  outline_set(false);oo.dt=100;},
+ textOnBy1fade:function(){this.ff=textOnBy1fade;  outline_set(false); led_sel=99;oo.dt=100;},
+ change_to_random:function(){ this.ff=change_to_random_ ; setTimeout(outline_set, 6000, false); oo.dt=100;},
+ 
+ move_:function(){this.ff=move_;  outline_set(false); led_i=0; toggle_underTexture_for_underline();oo.dt=100;},
+ moveCycle_:function(){this.ff=moveCycle_;  outline_set(false); led_sel=99;oo.dt=100;},
+ move_bounce_:function(){this.ff=move_bounce_;  outline_set(true); led_sel=99; toggle_underTexture_for_underline();oo.dt=100;},
+ moveSin_:function(){this.ff=moveSin_;  outline_set(false); led_sel=99;oo.bpm=21;oo.dt=1;},
+ beatSin4_:function(){this.ff=beatSin4_;  outline_set(false); led_sel=99;oo.bpm=64;oo.dt=1;
+  timeoffset_mul=2245
+ 
+	if(oo.bpm<21) oo.bpm=21;
+
+	// for(n=0;n<LEDE;n++)
+	// {
+		// n_timebase[n]=n*32;
+		// n_timeoffset[n]=n*64;
+	// }
+	for(n=0;n<LEDE;n++)
+	{
+		n_timebase[n]=1+n*1;
+		n_timeoffset[n]=n*timeoffset_mul;
+	}
+ },
+ beatSin4_1:function(){this.ff=beatSin4_;  outline_set(false); led_sel=99;oo.bpm=64;oo.dt=1;
+  timeoffset_mul=111
+ 
+	if(oo.bpm<21) oo.bpm=21;
+
+	// for(n=0;n<LEDE;n++)
+	// {
+		// n_timebase[n]=n*32;
+		// n_timeoffset[n]=n*64;
+	// }
+	for(n=0;n<LEDE;n++)
+	{
+		n_timebase[n]=1;
+		n_timeoffset[n]=n*timeoffset_mul;
+	}
+ },
+ beatSin4randt_:function(){this.ff=beatSin4randt_;  outline_set(false); led_sel=99; toggle_underTexture_for_underline();oo.dt=100;
+ 	if(oo.bpm<21) oo.bpm=21;
+
+	// for(n=0;n<LEDE;n++)
+	// {
+		// n_timebase[n]=n*32;
+		// n_timeoffset[n]=n*64;
+	// }
+	for(n=0;n<LEDE;n++)
+	{
+		n_timebase[n]=n*random8()/512;
+		n_timeoffset[n]=1+n*random8();
+	}
+ },
+ random_changing_:function(){this.ff=random_changing_;  outline_set(false); led_sel=99;
+ c_m=40
+c_M=255
+	for(n=0;n<LEDE;n++)
+	{
+		cc_target[n]=random8(c_m, c_M);
+	}
+ },
+ gen_random_move_:function(){this.ff=gen_random_move_;  outline_set(false); led_sel=99; oo.dt=130;},
+ gen_random_move_1:function(){this.ff=gen_random_move_1;  outline_set(false); led_sel=99;oo.dt=440;},
+
+ dt:100,
+ bpm:21,
+ outline_sw:function(){
+	els[0].classList.toggle('outlineR');
+	els[1].classList.toggle('outlineO');
+	els[2].classList.toggle('outlineY');
+	els[3].classList.toggle('outlineG');
+	els[4].classList.toggle('outlineB');
+	els[5].classList.toggle('outlinePp');
+ }
+
+}
+
+function toggle_underTexture_for_underline(){
+var ee=document.getElementsByClassName('underline');
+  for(var n=0;n<ee.length;n++)
+  {
+	ee[n].classList.toggle('underTexture');
+  }
+}
+ 
+//------------
+var bPlaying=false;
+function toggle_Anim_mus(o)
+{
+		if(bPlaying)
+		{
+			$('aud').pause();
+			bPlaying=false;
+		}
+		else
+		{
+			$('aud').play();
+			bPlaying=true;
+		}
+		o.className =bPlaying?'Rl':'Bl';
+}
+//----------------------
+</script>
+</head>
+
+<body>
+<!-- position: relative;   -->
+<!-- background-color: #225; -->
+<!-- left: 0; top: 0; -->
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+
+<div style="
+position:absolute;
+width: 100%;height: 50%;
+background-image:url('mask_01.png');
+background-repeat: repeat;
+z-index:0;
+"></div>
+
+<h3 id='l0' class='outlineR letter underTexture'><div class='underline R tooltip'><span class="tooltiptext tooltip-bottom">あか</span></div>赤<h4>い</h4> </h3>
+<h3 id='l1' class='outlineO letter underTexture'><div class='underline O tooltip'><span class="tooltiptext tooltip-bottom">だいだいいろ / オレンジ</span></div>橙<h4>色</h4></h3>
+<h3 id='l2' class='outlineY letter underTexture'><div class='underline Y tooltip'><span class="tooltiptext tooltip-bottom">きいろ</span></div>黄<h4>色/い</h4></h3>
+<h3 id='l3' class='outlineG letter underTexture'><div class='underline G tooltip'><span class="tooltiptext tooltip-bottom">みどり</span></div>緑</h3>
+<h3 id='l4' class='outlineB letter underTexture'><div class='underline B tooltip'><span class="tooltiptext tooltip-bottom">あお</span></div>青<h4>い</h4></h3>
+<h3 id='l5' class='outlinePp letter underTexture'><div class='underline Pp tooltip'><span class="tooltiptext tooltip-bottom">むらさき</span></div>紫</h3>
+
+<!-- <h3>桃<h4>色</h4></h3> ももいろ /ピンク-->
+<!-- <h3>茶<h4>色</h4></h3> ちゃいろ-->
+
+<!-- <h3>白<h4>い</h4></h3> しろ-->
+<!-- <h3>灰<h4>色</h4></h3> はいいろ-->
+<!-- <h3>黒<h4>い</h4></h3> くろ-->
+</div>
+<script>
+function txt_input() {
+  var tt = $("txt_in").value;
+  var ee=document.getElementsByClassName('letter');
+  for(var n=0;n<ee.length;n++)
+  {
+	if(ee[n] && tt[n])	ee[n].innerHTML = tt[n];
+  }
+}
+</script>
+<input type="text" id="txt_in" oninput="txt_input()" style='z-index:99;position:relative'>
+<br><br>
+<audio id="aud" controls>
+	<source src="2021-12-14_Draft_v03.opus" >
+</audio>
+<br>
+
+<!--
+<button onclick="ff()">Start</button>
+<button id="start">start</button>
+<button id="stop">stop</button>
+-->
+
+</body>
+</html>
