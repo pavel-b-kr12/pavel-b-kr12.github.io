@@ -209,9 +209,9 @@ els=[];
 
 
 var stt={
- ww:1024,
- hh:512,
- zoomW:40,
+ ww:500,
+ hh:500,
+ zoomW:50,
  zoomH:1,
  format: 'TSV', //TSV bin0_254
  //serSpeed:115200,
@@ -223,6 +223,7 @@ var dataArr_i=0;
 var dataArr_buffer=[];
 function setup() {
 	createCanvas(stt.ww, stt.hh);
+	pixelDensity(1);
 
 	for(i=0;i<LEDE;i++)
 	{
@@ -240,6 +241,7 @@ function setup() {
 	gui.add(oo, 'textOnBy1fade');
 	gui.add(oo, 'change_to_random');
 	gui.add(oo, 'move_');
+	gui.add(oo, 'move_ooposit_');
 	gui.add(oo, 'moveCycle_');
 	gui.add(oo, 'move_bounce_');
 	gui.add(oo, 'moveSin_');
@@ -255,7 +257,10 @@ function setup() {
 	gui.add(oo, 'dt').min(1).max(500).step(1);
 	gui.add(oo, 'bpm').min(1).max(120).step(1);
 	
-	gui.add(oo, 'outline_sw');
+	var folder_view = gui.addFolder('view');
+	
+	folder_view.add(oo, 'outline_sw');
+	folder_view.add(oo, 'dots_sw');
 }
 //TODO port C:\_wr\pavel-b-kr12.github.io\serial_com_port_view_online\serial_com_port_view_online.htm
 function draw() {
@@ -265,7 +270,8 @@ function draw() {
 	//let d = pixelDensity(); //https://p5js.org/reference/#/p5/pixels
 	for(let y=0, n=0;y<stt.hh;y++){
 	for(let x=0;x<stt.ww;x++,n+=4) {
-	
+		//if(Math.floor(x/stt.zoomW)>=LEDE) break;
+		
 	  if(y==stt.hh-1) //draw 1 line
 	  {
 		 if(x<dataArr.length*stt.zoomW) //TODO use zoomH
@@ -281,6 +287,7 @@ function draw() {
 				//pixels[n + 2] = value>=254?0:Math.log(value)*33;//110;
 				pixels[n + 2] = Math.sqrt(1/(256-value))*255;
 				pixels[(n + 3)] = 255;
+				
 			}
 
 		 }
@@ -352,7 +359,10 @@ function outline_set(b)
 
 }
 //------------------------eff
-
+/*
+bpm - это для частоты функция типа синус.
+dt - пауза между отображением (одновременно и замедляет и делает градиент более ступенчатым).
+*/
 function fadeAll(){
 	if(oo.bSame)
 	{
@@ -486,6 +496,24 @@ function move(c_m, c_M, dt, len)
 		show(); delay(dt);
 	}
 }
+
+function move_ooposit_(){
+ move_ooposit(0, 255, 80, 2000);
+}
+function move_ooposit(c_m, c_M, dt, len)
+{
+	if(delay_ret(oo.dt)) return;
+	{
+		for(n=0;n<LEDE;n++)
+		{
+			cc[n]=(led_i==n||LEDE-1-led_i==n)?c_M:c_m;
+		}
+
+		led_i++;
+		show(); delay(dt);
+	}
+}
+
 function moveCycle_(){
  moveCycle(0, 255, LEDE+1, 220, 5000); 
 }
@@ -675,6 +703,7 @@ var oo=
  change_to_random:function(){ this.ff=change_to_random_ ; setTimeout(outline_set, 6000, false); oo.dt=100;},
  
  move_:function(){this.ff=move_;  outline_set(false); led_i=0; toggle_underTexture_for_underline();oo.dt=100;},
+ move_ooposit_:function(){this.ff=move_ooposit_;  outline_set(false); led_i=0; toggle_underTexture_for_underline();oo.dt=250;},
  moveCycle_:function(){this.ff=moveCycle_;  outline_set(false); led_sel=99;oo.dt=100;},
  move_bounce_:function(){this.ff=move_bounce_;  outline_set(true); led_sel=99; toggle_underTexture_for_underline();oo.dt=100;},
  moveSin_:function(){this.ff=moveSin_;  outline_set(false); led_sel=99;oo.bpm=21;oo.dt=1;},
@@ -744,9 +773,14 @@ c_M=255
 	els[3].classList.toggle('outlineG');
 	els[4].classList.toggle('outlineB');
 	els[5].classList.toggle('outlinePp');
+ },
+ dots_sw:function(){
+	bmask_dots=!bmask_dots;
+	$('mask_dots').style.display=bmask_dots?'block':'none';
  }
 
 }
+var bmask_dots=true;
 
 function toggle_underTexture_for_underline(){
 var ee=document.getElementsByClassName('underline');
@@ -785,14 +819,11 @@ function toggle_Anim_mus(o)
 <br>
 <br>
 <br>
-<br>
-<br>
-<br>
-<br>
 
-<div style="
+<div id='mask_dots' style="
 position:absolute;
-width: 100%;height: 50%;
+width: 90%;height: 70%;
+top:1vw;
 background-image:url('mask_01.png');
 background-repeat: repeat;
 z-index:0;
